@@ -11,6 +11,7 @@ import {
   type Session,
 } from '../../experiments'
 import { Explanation, PredictedVsActual, WhyItMatters } from './Compare'
+import { CountdownOverlay, useRevealCountdown } from './Stage'
 
 interface Props {
   sessionId: string
@@ -25,6 +26,7 @@ const AnswerCtx = createContext<(p: Payload) => void>(() => {})
 export default function ParticipantView({ sessionId, session, mine }: Props) {
   const exp = EXPERIMENTS[session.experiment]
   const open = session.phase !== 'closed'
+  const countdown = useRevealCountdown(!open)
   const [joinError, setJoinError] = useState<string | null>(null)
   const [answer, setAnswer] = useState<Payload | null>(null)
   const joining = useRef(false)
@@ -53,7 +55,8 @@ export default function ParticipantView({ sessionId, session, mine }: Props) {
 
   return (
     <AnswerCtx.Provider value={setAnswer}>
-      <div className="mx-auto max-w-lg px-4 py-10">
+      <CountdownOverlay count={countdown} />
+      <div className="mx-auto max-w-lg px-4 py-8">
         <p className="text-sm uppercase tracking-widest text-muted-foreground">
           {open ? exp.neutralLabel : `${exp.name} effect · ${session.title}`}
         </p>
@@ -85,13 +88,11 @@ function Predict({ sessionId, session, answer }: { sessionId: string; session: S
       {exp.id === 'framing' ? (
         <div className="mt-5 grid gap-3">
           {[
-            ['gain', 'When it says "people will be saved"'],
-            ['loss', 'When it says "people will die"'],
-            ['same', 'No difference, it\'s the same choice'],
-          ].map(([k, label]) => (
-            <Button key={k} variant="outline" className="h-auto min-h-12 whitespace-normal py-3" disabled={busy} data-testid={`predict-${k}`} onClick={() => send({ predictedFrame: k })}>
-              {label}
-            </Button>
+            ['gain', 'A', 'The "will be saved" wording'],
+            ['loss', 'B', 'The "will die" wording'],
+            ['same', 'C', 'No difference'],
+          ].map(([k, letter, label]) => (
+            <Tile key={k} letter={letter} title={label} testId={`predict-${k}`} disabled={busy} onClick={() => send({ predictedFrame: k })} />
           ))}
         </div>
       ) : (
@@ -146,8 +147,12 @@ function Debrief({ session, mine }: { session: Session; mine: ResponseRow }) {
     <div data-testid="debrief" className="mt-6 space-y-5">
       <h1 className="font-display text-2xl font-bold">Your results</h1>
       <div className="space-y-3">
-        <Row k="Me" v={me} />
-        <Row k="Us" v={us} />
+        {/* The one personal fact gets the emphasis; the rest is supporting context. */}
+        <div data-testid="debrief-me" className="rounded-3xl bg-primary p-5 text-primary-foreground shadow-card">
+          <div className="text-xs uppercase tracking-widest opacity-80">You</div>
+          <div className="mt-1 font-display text-2xl font-bold leading-snug">{me}</div>
+        </div>
+        <Row k="Your class" v={us} />
         {typeof mine.prediction === 'number' && (
           <Row
             k="You predicted"
@@ -161,7 +166,10 @@ function Debrief({ session, mine }: { session: Session; mine: ResponseRow }) {
           />
         )}
       </div>
-      <Row k="Takeaway" v={exp.takeaway} />
+      <div className="border-l-4 border-primary py-1 pl-4">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">Takeaway</div>
+        <div className="mt-1 font-display text-xl font-bold leading-snug">{exp.takeaway}</div>
+      </div>
       <PredictedVsActual experiment={session.experiment} stats={stats} />
       <p className="text-xs text-muted-foreground">
         A classroom demonstration, not a cognitive assessment: one session, a few trials, phone timing.
@@ -176,9 +184,48 @@ function Debrief({ session, mine }: { session: Session; mine: ResponseRow }) {
   )
 }
 
+/**
+ * Big answer tile for phones. Every option gets the SAME style (only the
+ * letter differs): per-option colors, as in quiz apps, could nudge choices in
+ * an experiment (e.g. red reads as "danger").
+ */
+function Tile({
+  letter,
+  title,
+  body,
+  onClick,
+  disabled,
+  testId,
+}: {
+  letter: string
+  title: string
+  body?: string
+  onClick: () => void
+  disabled?: boolean
+  testId?: string
+}) {
+  return (
+    <button
+      type="button"
+      data-testid={testId}
+      disabled={disabled}
+      onClick={onClick}
+      className="flex min-h-24 w-full items-center gap-4 rounded-2xl bg-foreground p-5 text-left text-background shadow-card transition active:scale-[0.98] disabled:opacity-50"
+    >
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background font-display text-2xl font-bold text-foreground">
+        {letter}
+      </span>
+      <span>
+        <span className="block text-xl font-bold">{title}</span>
+        {body && <span className="mt-1 block text-base opacity-90">{body}</span>}
+      </span>
+    </button>
+  )
+}
+
 function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div className="rounded-xl border border-border p-4">
+    <div className="px-1 py-2">
       <div className="text-xs uppercase tracking-widest text-muted-foreground">{k}</div>
       <div className="mt-1 text-lg leading-snug">{v}</div>
     </div>
@@ -203,9 +250,9 @@ function Anchoring({ sessionId, condition }: { sessionId: string; condition: str
         <h1 className="font-display text-2xl font-bold leading-snug">
           Did Mahatma Gandhi die before or after the age of {anchor}?
         </h1>
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <Button className="h-14 text-lg" onClick={() => setStep(2)}>Before {anchor}</Button>
-          <Button className="h-14 text-lg" onClick={() => setStep(2)}>After {anchor}</Button>
+        <div className="mt-8 grid gap-3">
+          <Tile letter="A" title={`Before ${anchor}`} onClick={() => setStep(2)} />
+          <Tile letter="B" title={`After ${anchor}`} onClick={() => setStep(2)} />
         </div>
       </div>
     )
@@ -247,31 +294,27 @@ function Framing({ sessionId, condition }: { sessionId: string; condition: strin
       <h1 className="font-display text-xl font-bold leading-snug">
         A new disease is expected to kill 600 people. Two programs have been proposed. Which do you choose?
       </h1>
-      <div className="mt-6 space-y-3">
-        <button
-          type="button"
-          data-testid="choice-sure"
+      <div className="mt-8 grid gap-3">
+        <Tile
+          letter="A"
+          testId="choice-sure"
           disabled={busy}
+          title="Program A"
+          body={gain ? '200 people will be saved.' : '400 people will die.'}
           onClick={() => submit({ choice: 'sure' })}
-          className="w-full rounded-xl border-2 border-border bg-card p-4 text-left hover:border-primary disabled:opacity-50"
-        >
-          <div className="font-semibold">Program A</div>
-          <div className="mt-1">{gain ? '200 people will be saved.' : '400 people will die.'}</div>
-        </button>
-        <button
-          type="button"
-          data-testid="choice-risky"
+        />
+        <Tile
+          letter="B"
+          testId="choice-risky"
           disabled={busy}
-          onClick={() => submit({ choice: 'risky' })}
-          className="w-full rounded-xl border-2 border-border bg-card p-4 text-left hover:border-primary disabled:opacity-50"
-        >
-          <div className="font-semibold">Program B</div>
-          <div className="mt-1">
-            {gain
+          title="Program B"
+          body={
+            gain
               ? '1/3 chance all 600 are saved, 2/3 chance nobody is saved.'
-              : '1/3 chance nobody dies, 2/3 chance all 600 die.'}
-          </div>
-        </button>
+              : '1/3 chance nobody dies, 2/3 chance all 600 die.'
+          }
+          onClick={() => submit({ choice: 'risky' })}
+        />
       </div>
       {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
     </div>
@@ -345,7 +388,7 @@ function Stroop({ sessionId }: { sessionId: string }) {
           You&apos;ll see {STROOP_TRIALS} color words. Tap the button matching the color the word is <em>printed in</em>,
           not what it says. Go as fast as you can.
         </p>
-        <Button data-testid="stroop-start" className="mt-6 h-12 w-full text-base" onClick={() => setI(0)}>
+        <Button data-testid="stroop-start" className="mt-8 h-16 w-full rounded-2xl text-xl" onClick={() => setI(0)}>
           Start
         </Button>
       </div>
@@ -370,9 +413,10 @@ function Stroop({ sessionId }: { sessionId: string }) {
       <p className="text-sm text-muted-foreground">
         {i + 1} / {trials.length}
       </p>
-      <div className="flex h-40 items-center justify-center">
+      {/* White card: every ink color (yellow included) stays legible on any theme. */}
+      <div className="my-4 flex h-44 items-center justify-center rounded-3xl bg-white shadow-card">
         {!blank && (
-          <span data-testid="stroop-word" className="text-6xl font-black" style={{ color: STROOP_COLORS[t.ink].css }}>
+          <span data-testid="stroop-word" className="text-7xl font-black" style={{ color: STROOP_COLORS[t.ink].css }}>
             {STROOP_COLORS[t.word].name}
           </span>
         )}
@@ -384,7 +428,8 @@ function Stroop({ sessionId }: { sessionId: string }) {
             type="button"
             data-testid={`stroop-${c.name}`}
             onPointerDown={() => answer(idx)}
-            className="h-16 rounded-xl border-2 border-border text-lg font-semibold text-foreground active:scale-95"
+            // Deliberately uncolored: colored buttons would cue the answer and erase the effect.
+            className="h-24 rounded-2xl bg-foreground text-2xl font-bold text-background active:scale-95"
           >
             {c.name.toLowerCase()}
           </button>

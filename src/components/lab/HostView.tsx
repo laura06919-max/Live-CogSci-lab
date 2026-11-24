@@ -4,6 +4,7 @@ import { callAction } from '@/lib/actions'
 import { ANCHORS, EXPERIMENTS, computeStats, mean, median, type ResponseRow, type Session } from '../../experiments'
 import Qr from './Qr'
 import { Explanation, PredictedVsActual, WhyItMatters } from './Compare'
+import { CountdownOverlay, LobbyWall, useRevealCountdown } from './Stage'
 
 interface Props {
   sessionId: string
@@ -17,6 +18,7 @@ export default function HostView({ sessionId, session, rows }: Props) {
   const [explaining, setExplaining] = useState(false)
   const [switching, setSwitching] = useState(false)
   const open = session.phase !== 'closed'
+  const countdown = useRevealCountdown(!open)
   const joined = rows.length
   const done = rows.filter((r) => r.submitted)
   const joinUrl = typeof window !== 'undefined' ? `${window.location.origin}/join?code=${session.code}` : ''
@@ -36,102 +38,115 @@ export default function HostView({ sessionId, session, rows }: Props) {
     if (!r.success) error('Could not update session', r.error)
   }
 
+  if (open) {
+    // The projector "stage". It shows nothing about the experiment beyond a
+    // neutral label: no effect name, no condition names, no partial results.
+    return (
+      <div className="flex min-h-full flex-col">
+        <section className="bg-primary px-4 py-8 text-primary-foreground sm:py-10">
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 md:flex-row md:justify-between">
+            <div className="text-center md:text-left">
+              <p className="text-sm uppercase tracking-[0.25em] opacity-80">
+                {exp.neutralLabel} · {session.title}
+              </p>
+              <p className="mt-3 text-2xl opacity-90">Go to <strong>{window.location.host}/join</strong> and enter</p>
+              <div data-testid="session-code" className="mt-2 font-mono text-7xl font-bold tracking-[0.18em] sm:text-8xl lg:text-9xl">
+                {session.code}
+              </div>
+              <button
+                type="button"
+                className="mt-2 text-sm underline opacity-80 hover:opacity-100"
+                onClick={() => navigator.clipboard?.writeText(joinUrl)}
+              >
+                copy join link
+              </button>
+            </div>
+            <div className="rounded-3xl bg-white p-3 shadow-lg">
+              <Qr value={joinUrl} size={220} />
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+            <p className="text-xl">
+              <span data-testid="joined-count" className="font-display text-5xl font-bold">{joined}</span>
+              <span className="text-muted-foreground"> joined · </span>
+              <span data-testid="submitted-count" className="font-display text-5xl font-bold text-primary">{done.length}</span>
+              <span className="text-muted-foreground"> answered</span>
+            </p>
+            <p className="text-lg text-muted-foreground">Answer on your own phone, without talking.</p>
+          </div>
+          <LobbyWall rows={rows} />
+        </section>
+
+        <footer className="sticky bottom-0 border-t border-border bg-background/95 px-4 py-4 backdrop-blur">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+            <span className="text-sm text-muted-foreground">Results stay hidden until you reveal them.</span>
+            <Button
+              data-testid="toggle-phase"
+              className="h-14 rounded-full px-8 text-lg"
+              disabled={switching || done.length === 0}
+              onClick={togglePhase}
+            >
+              {switching ? 'Revealing…' : 'Reveal results'}
+            </Button>
+          </div>
+        </footer>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+      <CountdownOverlay count={countdown} />
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          {/* While answers are open this screen is on the projector: no effect name or hint, to avoid priming. */}
-          <p className="text-sm uppercase tracking-widest text-muted-foreground">
-            {open ? exp.neutralLabel : `${exp.name} effect`} · {session.title}
+          <p className="text-sm uppercase tracking-widest text-primary">
+            {exp.name} effect · {session.title}
           </p>
-          <h1 className="mt-1 font-display text-3xl font-bold sm:text-4xl">
-            {open ? 'Scan to join. Answer on your own, without talking.' : exp.tagline}
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            <span data-testid="joined-count" className="font-display text-3xl font-bold text-foreground">{joined}</span> joined ·{' '}
-            <span data-testid="submitted-count" className="font-display text-3xl font-bold text-foreground">{done.length}</span> answered
+          <h1 className="mt-1 font-display text-3xl font-bold sm:text-5xl">{exp.tagline}</h1>
+          <p className="mt-2 text-lg text-muted-foreground">
+            <span data-testid="submitted-count" className="font-semibold text-foreground">{done.length}</span> answers ·
+            code {session.code}
           </p>
         </div>
-        <div className="flex items-center gap-5 rounded-2xl border-2 border-primary/40 bg-card px-6 py-5 shadow-card">
-          <Qr value={joinUrl} size={168} />
-          <div className="text-center">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">Scan, or go to {window.location.host}/join</div>
-            <div data-testid="session-code" className="mt-1 font-mono text-6xl font-bold tracking-[0.2em] text-primary lg:text-7xl">
-              {session.code}
-            </div>
-            <button
-              type="button"
-              className="mt-1 text-xs text-muted-foreground underline"
-              onClick={() => navigator.clipboard?.writeText(joinUrl)}
-            >
-              copy join link
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-2">
-        <Button data-testid="toggle-phase" variant={open ? 'default' : 'outline'} disabled={switching} onClick={togglePhase}>
-          {switching ? '…' : open ? 'Close & reveal results' : 'Reopen for answers'}
-        </Button>
-        {!open && (
-          <Button data-testid="explain" variant="outline" disabled={explaining || done.length < 2} onClick={explain}>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            data-testid="explain"
+            className="h-12 rounded-full px-6 text-base"
+            disabled={explaining || done.length < 2}
+            onClick={explain}
+          >
             {explaining ? 'Finding papers & writing…' : session.explanation ? 'Regenerate explanation' : 'Explain these results'}
           </Button>
-        )}
+          <Button data-testid="toggle-phase" variant="outline" className="h-12 rounded-full px-6" disabled={switching} onClick={togglePhase}>
+            {switching ? '…' : 'Reopen for answers'}
+          </Button>
+        </div>
       </div>
 
-      <section className="mt-8 rounded-2xl border border-border bg-card shadow-card p-6">
-        {open ? (
-          <div>
-            <p className="text-sm text-muted-foreground">
-              Results are hidden while people answer (so nobody is influenced). Live progress:
-            </p>
-            <ConditionProgress session={session} rows={rows} />
-          </div>
-        ) : (
-          <Results session={session} rows={done} />
-        )}
+      <section className="mt-8 rounded-3xl border border-border bg-card p-6 shadow-card sm:p-8">
+        <Results session={session} rows={done} />
       </section>
 
-      {!open && done.length > 0 && (
+      {done.length > 0 && (
         <section className="mt-6">
           <PredictedVsActual experiment={session.experiment} stats={session.stats ?? computeStats(session.experiment, rows)} />
         </section>
       )}
 
-      {!open && session.explanation && (
+      {session.explanation && (
         <div className="mt-6">
           <Explanation text={session.explanation} sources={session.sources} />
         </div>
       )}
 
-      {!open && done.length > 0 && (
+      {done.length > 0 && (
         <div className="mt-6">
           <WhyItMatters experiment={session.experiment} />
         </div>
       )}
-    </div>
-  )
-}
-
-function ConditionProgress({ session, rows }: { session: Session; rows: ResponseRow[] }) {
-  const exp = EXPERIMENTS[session.experiment]
-  const groups = exp.conditions.length ? exp.conditions : ['within']
-  return (
-    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-      {groups.map((c) => {
-        const inGroup = rows.filter((r) => r.condition === c)
-        return (
-          <div key={c} className="rounded-xl bg-muted p-4">
-            <div className="text-sm text-muted-foreground">{exp.conditionLabels[c] ?? 'Everyone'}</div>
-            <div className="mt-1 text-2xl font-semibold">
-              {inGroup.filter((r) => r.submitted).length}
-              <span className="text-base font-normal text-muted-foreground"> / {inGroup.length} answered</span>
-            </div>
-          </div>
-        )
-      })}
     </div>
   )
 }
@@ -141,12 +156,12 @@ function Bar({ label, value, max, display, tone }: { label: string; value: numbe
   const pct = max > 0 ? Math.max(2, (100 * value) / max) : 0
   return (
     <div>
-      <div className="flex justify-between text-sm">
+      <div className="flex justify-between text-base sm:text-lg">
         <span>{label}</span>
-        <span className="font-mono font-semibold">{display}</span>
+        <span className="font-semibold tabular-nums">{display}</span>
       </div>
-      <div className="mt-1 h-8 overflow-hidden rounded-lg bg-muted">
-        <div className={`h-full rounded-lg transition-all duration-700 ${tone}`} style={{ width: `${pct}%` }} />
+      <div className="mt-1 h-12 overflow-hidden rounded-xl bg-muted">
+        <div className={`grow-x h-full rounded-xl transition-all duration-700 ${tone}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   )
@@ -174,14 +189,14 @@ function Results({ session, rows }: { session: Session; rows: ResponseRow[] }) {
                 value={g.mean ?? 0}
                 max={Math.max(max, 140)}
                 display={g.mean === null ? '—' : `mean ${g.mean.toFixed(0)} · median ${g.median!.toFixed(0)}`}
-                tone={g.c === 'low' ? 'bg-sky-500' : 'bg-orange-500'}
+                tone={g.c === 'low' ? 'bg-primary' : 'bg-amber-600'}
               />
               {/* Dot strip: every individual answer, so outliers are visible. */}
               <div className="relative mt-2 h-4">
                 {g.xs.map((x, i) => (
                   <span
                     key={i}
-                    className={`absolute top-1 h-2.5 w-2.5 -translate-x-1/2 rounded-full opacity-70 ${g.c === 'low' ? 'bg-sky-500' : 'bg-orange-500'}`}
+                    className={`absolute top-1 h-2.5 w-2.5 -translate-x-1/2 rounded-full opacity-70 ${g.c === 'low' ? 'bg-primary' : 'bg-amber-600'}`}
                     style={{ left: `${(100 * x) / Math.max(max, 140)}%` }}
                   />
                 ))}
@@ -217,7 +232,7 @@ function Results({ session, rows }: { session: Session; rows: ResponseRow[] }) {
               value={g.pct}
               max={100}
               display={g.n ? `${g.pct.toFixed(0)}% sure (${g.sure}/${g.n})` : '—'}
-              tone={g.c === 'gain' ? 'bg-emerald-500' : 'bg-rose-500'}
+              tone={g.c === 'gain' ? 'bg-primary' : 'bg-amber-600'}
             />
           ))}
         </div>
@@ -236,8 +251,8 @@ function Results({ session, rows }: { session: Session; rows: ResponseRow[] }) {
       <h2 className="font-display text-xl font-bold">Average reaction time (correct trials)</h2>
       <p className="text-sm text-muted-foreground">{exp.prediction}</p>
       <div className="mt-5 space-y-5">
-        <Bar label="Congruent (RED in red)" value={con} max={max} display={`${con.toFixed(0)} ms`} tone="bg-emerald-500" />
-        <Bar label="Incongruent (RED in blue)" value={inc} max={max} display={`${inc.toFixed(0)} ms`} tone="bg-rose-500" />
+        <Bar label="Congruent (RED in red)" value={con} max={max} display={`${con.toFixed(0)} ms`} tone="bg-primary" />
+        <Bar label="Incongruent (RED in blue)" value={inc} max={max} display={`${inc.toFixed(0)} ms`} tone="bg-amber-600" />
       </div>
       <p className="mt-6 text-xl">
         Interference: <strong>{(inc - con).toFixed(0)} ms</strong> · {slower}/{rs.length} people were slower on mismatched words.

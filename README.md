@@ -78,6 +78,37 @@ Claude receives only those numbered sources and is told to cite nothing else. Th
 only after the reveal, needs at least 2 answers, is rate-limited to once a minute per session (it spends the
 owner's credits), and recomputes stats from the database rather than trusting client numbers.
 
+## Design decisions (human-centered)
+
+Every UI choice starts from who is looking at the screen, where they are, and what they need in that moment.
+There are three people and one constraint:
+
+- **The instructor** stands at the front of a lecture hall, running the room and watching the clock.
+- **The student** is in a lecture seat, on a phone, often holding it in one hand, and may feel self-conscious.
+- **The student afterward** reviews what they learned, maybe weeks later.
+- **The constraint, experimental validity:** anything students see before answering can change their answers.
+
+| Person and situation | Need | Design choice |
+| --- | --- | --- |
+| Instructor; the screen is on a projector, read from the back row | Students must be able to join without asking "what's the code?" | Full-width stage with a 7xl–9xl code, a 220px QR code and the join URL in plain words. A light "Notebook" theme, because dark slides wash out on many projectors. |
+| Instructor, deciding when to reveal | Know when the room is ready, without seeing the results early | Huge "joined / answered" counters and a lobby wall where names pop in and turn teal with a ✓ when answered. One large "Reveal results" button, pinned to the bottom of the screen and disabled until someone has answered. |
+| Students watching the projector before answering | Not be primed | The stage shows only a neutral label ("Estimation study") and "Answer on your own phone, without talking". No effect name and no condition names. An earlier version showed "Anchor: 9 / Anchor: 140" progress on the projector, which revealed both conditions to the whole room, so it was removed. The product name "Bias Mirror" was dropped for the same reason. |
+| Students watching the projector | Feel included, not exposed | The lobby wall shows first names only and only whether someone answered, never what they answered. No points, rankings or leaderboards: ranking people on bias or reaction time would turn a lesson into a judgment. |
+| Student on a phone, one-handed, in a cramped seat | Answer fast without mis-taps | One decision per screen. Answer tiles are full-width and at least 96px tall, with a letter badge. Stroop buttons are 96px tall in a 2×2 grid and register on pointer-down, so timing doesn't include the finger lift. |
+| Student choosing between options | Options must be equally attractive, for validity | Every tile has the same style (only the letter differs). Unlike quiz apps, there's no color per answer: red reads as "danger" and could nudge a framing choice. Stroop buttons are deliberately not colored, because that would give away the answer. |
+| Student doing Stroop | See the ink color accurately | The word sits on a pure-white card, so every ink color (yellow included) keeps its intended contrast on the cream background. |
+| The whole room at the reveal | A shared "aha" moment | A full-screen 3-2-1 countdown on the projector and on every phone, then bars that grow into place. All motion is turned off for users with reduced-motion settings. |
+| Student reading their debrief | Find "what did *I* do?" first | The single personal fact ("You saw the high anchor: 140. You guessed 73.") is the one bold, colored card. The class result and prediction are quieter text, and the takeaway is set apart with a rule, so the eye goes *me → my class → the lesson*. |
+| Student reading results | Not mistake a demo for a diagnosis | A plain line under every result: "a classroom demonstration, not a cognitive assessment." There are no scores or percentiles about the person. |
+| Colorblind students and instructors | Read charts without color | Every bar has a text label and a number; color is never the only signal. |
+
+**What I deliberately didn't copy from quiz apps:** a different color per answer, points, speed bonuses,
+leaderboards and podiums. They create energy in a quiz, but in an experiment they bias the data and
+make the debrief feel like a grade.
+
+**How these were checked:** each screen was rendered at a phone size (390×844) and a projector size
+(1440×900) and reviewed. The real-device test used a laptop as host and two phones as participants.
+
 ## Tradeoffs and what I left out
 
 - **Main tradeoff: participants must sign in.** Anonymous joining would be faster in a lecture hall. But
@@ -121,11 +152,8 @@ owner's credits), and recomputes stats from the database rather than trusting cl
 7. Let instructors export CSV and compare sections over a term.
 8. Add more paradigms and areas (memory, perception, language), e.g. the Linda problem or the Müller-Lyer illusion, through the same `EXPERIMENTS` registry,
    each with canonical sources.
-9. Redesign for accessibility and energy. The current UI is clean but generic. Next I'd borrow interaction
-   patterns from live-quiz tools like Kahoot: a full-screen host lobby where joiners pop in, one big decision
-   per phone screen, large color-coded answer tiles (with text labels, so they work for colorblind
-   students), and a dramatic reveal. The goal is to make it feel like a classroom event rather than a
-   dashboard, while keeping its own visual identity and no points or leaderboards.
+9. Continue the classroom-event redesign (see Design decisions): optional sound cues for the reveal,
+   instructor "presentation mode" with keyboard shortcuts, and testing the projector stage in a real lecture hall.
 
 ## Run it
 

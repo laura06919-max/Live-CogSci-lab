@@ -81,3 +81,22 @@
   font-optical-sizing: auto;
   letter-spacing: -0.01em;
 }
+
+/* Classroom-event motion: people popping into the lobby, the reveal count. */
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.6); }
+  70% { opacity: 1; transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.pop-in { animation: pop-in 360ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+@keyframes count-pop {
+  0% { opacity: 0; transform: scale(1.6); }
+  40% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.9; transform: scale(0.96); }
+}
+.count-pop { animation: count-pop 800ms ease-out both; }
+@keyframes grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.grow-x { transform-origin: left; animation: grow-x 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .pop-in, .count-pop, .grow-x { animation: none; }
+}
