@@ -25,6 +25,10 @@ comparisons between individual students.
 within-subjects, IV/DV), concept tags they'll recognize from coursework, real-life examples, and a reflection
 question. All of it is written in advance per experiment, not AI-generated, and saved to their notebook.
 
+**Discover:** a public experiment library at `/discover` (no sign-in needed) shows each experiment's area,
+design, duration and what participants do. What the effect *is* sits behind an "instructors (spoiler)"
+toggle, so browsing doesn't prime future participants.
+
 **No priming:** until the reveal, the projector, phones and notebook show only a neutral label
 ("Estimation study", "Decision-making study") and no hint about the effect. Explaining an effect before
 people answer would change the result.
@@ -102,7 +106,12 @@ owner's credits), and recomputes stats from the database rather than trusting cl
 
 1. Let students delete or export their notebook. Deleting a response also changes the instructor's dataset,
    so it needs a deliberate rule (for example "anonymize, don't delete" after the reveal).
-2. Course matching: students optionally add their current courses; experiments already carry concept tags,
+2. Public classroom replications: hosts opt in to publish an anonymous summary of a revealed session. It
+   would be a separate `published_results` collection written only by a host-checked server action, holding
+   aggregates only (no rows, ids, codes, titles or timestamps), with at least 10 participants and every
+   subgroup of at least 5. It's readable by everyone (`'*': { read: true }`) and shown under each experiment
+   on Discover. Sessions themselves stay private, because they hold the title, code and host id.
+2b. Course matching: students optionally add their current courses; experiments already carry concept tags,
    so a notebook entry could say "related to 2 of your courses." Course-to-concept mappings should be
    curated by instructors, not guessed by AI.
 3. Complement UCSD SONA rather than replace it: SONA stays the system for scheduling and research credit,

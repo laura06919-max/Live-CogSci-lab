@@ -45,8 +45,8 @@ function Cell({ label, value, strong, small }: { label: string; value: string; s
 
 export function Explanation({ text, sources }: { text: string; sources?: Source[] }) {
   return (
-    <section data-testid="explanation" className="rounded-2xl border border-border bg-card p-5">
-      <h2 className="text-lg font-semibold">What just happened</h2>
+    <section data-testid="explanation" className="rounded-2xl border border-border bg-card shadow-card p-5">
+      <h2 className="font-display text-xl font-bold">What just happened</h2>
       <div className="mt-3 whitespace-pre-wrap leading-relaxed">{text}</div>
       {sources && sources.length > 0 && (
         <ol className="mt-4 space-y-1 text-sm text-muted-foreground">
@@ -77,8 +77,8 @@ export function Explanation({ text, sources }: { text: string; sources?: Source[
 export function WhyItMatters({ experiment }: { experiment: ExperimentId }) {
   const exp = EXPERIMENTS[experiment]
   return (
-    <section data-testid="why-it-matters" className="rounded-2xl border border-border bg-card p-5">
-      <h2 className="text-lg font-semibold">Why this matters</h2>
+    <section data-testid="why-it-matters" className="rounded-2xl border border-border bg-card shadow-card p-5">
+      <h2 className="font-display text-xl font-bold">Why this matters</h2>
       <dl className="mt-3 space-y-3 text-sm">
         <div>
           <dt className="text-xs uppercase tracking-widest text-muted-foreground">Area</dt>

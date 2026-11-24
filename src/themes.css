@@ -44,3 +44,40 @@
   --color-shell: #fafafa;
   --color-shell-panel: #ffffff;
 }
+
+/* Notebook — Bias Mirror's own theme. Warm paper, ink text, one deep-teal
+ * accent. Light on purpose: the host screen is shown on lecture-hall
+ * projectors, where dark slides wash out. */
+[data-theme="notebook"] {
+  color-scheme: light;
+  --color-background: #faf7f0;
+  --color-foreground: #1c1917;
+  --color-card: #ffffff;
+  --color-card-foreground: #1c1917;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1c1917;
+  --color-primary: #0f766e;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f1ece1;
+  --color-secondary-foreground: #1c1917;
+  --color-muted: #f1ece1;
+  --color-muted-foreground: #57534e;
+  --color-accent: #e8e0cf;
+  --color-accent-foreground: #1c1917;
+  --color-destructive: #b91c1c;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e4dccb;
+  --color-input: #d6cbb5;
+  --color-ring: #0f766e;
+  --shadow-card: 0 1px 2px 0 rgba(28, 25, 23, 0.05);
+  --shadow-card-hover: 0 4px 14px 0 rgba(28, 25, 23, 0.08);
+  --color-shell: #faf7f0;
+  --color-shell-panel: #ffffff;
+}
+
+/* Display serif for headlines — a lab-notebook voice next to the UI sans. */
+.font-display {
+  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}

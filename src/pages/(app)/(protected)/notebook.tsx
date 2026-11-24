@@ -44,7 +44,7 @@ export default function NotebookPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-3xl font-bold tracking-tight">My Lab</h1>
+      <h1 className="font-display text-3xl font-bold sm:text-4xl">My Lab</h1>
       <p className="mt-2 text-muted-foreground">
         Every experiment you&apos;ve taken part in, what happened, and what it shows. Only you can see your answers.
       </p>
@@ -81,9 +81,9 @@ export default function NotebookPage() {
             const lines = revealed ? personalLines(session.data, response.data) : null
             const when = time(response.updatedAt) ? new Date(time(response.updatedAt)).toLocaleDateString() : ''
             return (
-              <li key={response.recordId} data-testid="notebook-entry" className="rounded-2xl border border-border bg-card p-5">
+              <li key={response.recordId} data-testid="notebook-entry" className="rounded-2xl border border-border bg-card shadow-card p-5">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h2 className="text-lg font-semibold">{revealed ? `${exp.name} effect` : exp.neutralLabel}</h2>
+                  <h2 className="font-display text-xl font-bold">{revealed ? `${exp.name} effect` : exp.neutralLabel}</h2>
                   <span className="text-xs text-muted-foreground">
                     {revealed ? `${exp.area} · ` : ''}{session.data.title} · {when}
                   </span>

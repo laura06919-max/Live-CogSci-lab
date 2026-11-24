@@ -89,7 +89,7 @@ function Predict({ sessionId, session, answer }: { sessionId: string; session: S
             ['loss', 'When it says "people will die"'],
             ['same', 'No difference, it\'s the same choice'],
           ].map(([k, label]) => (
-            <Button key={k} variant="outline" disabled={busy} data-testid={`predict-${k}`} onClick={() => send({ predictedFrame: k })}>
+            <Button key={k} variant="outline" className="h-auto min-h-12 whitespace-normal py-3" disabled={busy} data-testid={`predict-${k}`} onClick={() => send({ predictedFrame: k })}>
               {label}
             </Button>
           ))}
@@ -114,7 +114,7 @@ function Predict({ sessionId, session, answer }: { sessionId: string; session: S
             />
             <span className="text-muted-foreground">{exp.id === 'anchoring' ? 'years' : 'ms'}</span>
           </div>
-          <Button className="mt-4 w-full" type="submit" disabled={busy || value === ''}>
+          <Button className="mt-4 h-12 w-full text-base" type="submit" disabled={busy || value === ''}>
             {busy ? 'Sending…' : 'Send my answer'}
           </Button>
         </form>
@@ -131,7 +131,8 @@ function Debrief({ session, mine }: { session: Session; mine: ResponseRow }) {
   if (session.phase !== 'closed' || !stats) {
     return (
       <div data-testid="done" className="mt-6">
-        <h1 className="text-2xl font-bold">Sent. Now wait for the reveal.</h1>
+        <div className="mb-4 h-2 w-24 animate-pulse rounded-full bg-primary/60" aria-hidden />
+        <h1 className="font-display text-2xl font-bold">Sent. Now wait for the reveal.</h1>
         <p className="mt-2 text-muted-foreground">
           When the host reveals the results, this screen will show your answer, the room&apos;s result and the research side by side.
         </p>
@@ -143,7 +144,7 @@ function Debrief({ session, mine }: { session: Session; mine: ResponseRow }) {
 
   return (
     <div data-testid="debrief" className="mt-6 space-y-5">
-      <h1 className="text-2xl font-bold">Your bias mirror</h1>
+      <h1 className="font-display text-2xl font-bold">Your bias mirror</h1>
       <div className="space-y-3">
         <Row k="Me" v={me} />
         <Row k="Us" v={us} />
@@ -199,12 +200,12 @@ function Anchoring({ sessionId, condition }: { sessionId: string; condition: str
   if (step === 1) {
     return (
       <div className="mt-6">
-        <h1 className="text-2xl font-bold leading-snug">
+        <h1 className="font-display text-2xl font-bold leading-snug">
           Did Mahatma Gandhi die before or after the age of {anchor}?
         </h1>
         <div className="mt-6 grid grid-cols-2 gap-3">
-          <Button onClick={() => setStep(2)}>Before {anchor}</Button>
-          <Button onClick={() => setStep(2)}>After {anchor}</Button>
+          <Button className="h-14 text-lg" onClick={() => setStep(2)}>Before {anchor}</Button>
+          <Button className="h-14 text-lg" onClick={() => setStep(2)}>After {anchor}</Button>
         </div>
       </div>
     )
@@ -217,7 +218,7 @@ function Anchoring({ sessionId, condition }: { sessionId: string; condition: str
         submit({ estimate: Number(age) })
       }}
     >
-      <h1 className="text-2xl font-bold leading-snug">How old do you think he was when he died?</h1>
+      <h1 className="font-display text-2xl font-bold leading-snug">How old do you think he was when he died?</h1>
       <p className="mt-1 text-sm text-muted-foreground">Your best guess — no googling.</p>
       <Input
         data-testid="estimate"
@@ -230,7 +231,7 @@ function Anchoring({ sessionId, condition }: { sessionId: string; condition: str
         onChange={(e) => setAge(e.target.value)}
         autoFocus
       />
-      <Button className="mt-4 w-full" type="submit" disabled={busy || age === ''}>
+      <Button className="mt-4 h-12 w-full text-base" type="submit" disabled={busy || age === ''}>
         {busy ? 'Sending…' : 'Submit'}
       </Button>
       {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
@@ -243,7 +244,7 @@ function Framing({ sessionId, condition }: { sessionId: string; condition: strin
   const gain = condition === 'gain'
   return (
     <div className="mt-6">
-      <h1 className="text-xl font-bold leading-snug">
+      <h1 className="font-display text-xl font-bold leading-snug">
         A new disease is expected to kill 600 people. Two programs have been proposed. Which do you choose?
       </h1>
       <div className="mt-6 space-y-3">
@@ -252,7 +253,7 @@ function Framing({ sessionId, condition }: { sessionId: string; condition: strin
           data-testid="choice-sure"
           disabled={busy}
           onClick={() => submit({ choice: 'sure' })}
-          className="w-full rounded-xl border border-border p-4 text-left hover:bg-muted disabled:opacity-50"
+          className="w-full rounded-xl border-2 border-border bg-card p-4 text-left hover:border-primary disabled:opacity-50"
         >
           <div className="font-semibold">Program A</div>
           <div className="mt-1">{gain ? '200 people will be saved.' : '400 people will die.'}</div>
@@ -262,7 +263,7 @@ function Framing({ sessionId, condition }: { sessionId: string; condition: strin
           data-testid="choice-risky"
           disabled={busy}
           onClick={() => submit({ choice: 'risky' })}
-          className="w-full rounded-xl border border-border p-4 text-left hover:bg-muted disabled:opacity-50"
+          className="w-full rounded-xl border-2 border-border bg-card p-4 text-left hover:border-primary disabled:opacity-50"
         >
           <div className="font-semibold">Program B</div>
           <div className="mt-1">
@@ -339,12 +340,12 @@ function Stroop({ sessionId }: { sessionId: string }) {
   if (i < 0) {
     return (
       <div className="mt-6">
-        <h1 className="text-2xl font-bold">Name the INK color</h1>
+        <h1 className="font-display text-2xl font-bold">Name the INK color</h1>
         <p className="mt-2 text-muted-foreground">
           You&apos;ll see {STROOP_TRIALS} color words. Tap the button matching the color the word is <em>printed in</em>,
           not what it says. Go as fast as you can.
         </p>
-        <Button data-testid="stroop-start" className="mt-6 w-full" onClick={() => setI(0)}>
+        <Button data-testid="stroop-start" className="mt-6 h-12 w-full text-base" onClick={() => setI(0)}>
           Start
         </Button>
       </div>

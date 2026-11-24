@@ -44,19 +44,19 @@ export default function HostView({ sessionId, session, rows }: Props) {
           <p className="text-sm uppercase tracking-widest text-muted-foreground">
             {open ? exp.neutralLabel : `${exp.name} effect`} · {session.title}
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">
+          <h1 className="mt-1 font-display text-3xl font-bold sm:text-4xl">
             {open ? 'Scan to join. Answer on your own, without talking.' : exp.tagline}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            <span data-testid="joined-count" className="font-semibold text-foreground">{joined}</span> joined ·{' '}
-            <span data-testid="submitted-count" className="font-semibold text-foreground">{done.length}</span> answered
+            <span data-testid="joined-count" className="font-display text-3xl font-bold text-foreground">{joined}</span> joined ·{' '}
+            <span data-testid="submitted-count" className="font-display text-3xl font-bold text-foreground">{done.length}</span> answered
           </p>
         </div>
-        <div className="flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4">
-          <Qr value={joinUrl} size={120} />
+        <div className="flex items-center gap-5 rounded-2xl border-2 border-primary/40 bg-card px-6 py-5 shadow-card">
+          <Qr value={joinUrl} size={168} />
           <div className="text-center">
             <div className="text-xs uppercase tracking-widest text-muted-foreground">Scan, or go to {window.location.host}/join</div>
-            <div data-testid="session-code" className="mt-1 font-mono text-5xl font-bold tracking-[0.25em]">
+            <div data-testid="session-code" className="mt-1 font-mono text-6xl font-bold tracking-[0.2em] text-primary lg:text-7xl">
               {session.code}
             </div>
             <button
@@ -81,7 +81,7 @@ export default function HostView({ sessionId, session, rows }: Props) {
         )}
       </div>
 
-      <section className="mt-8 rounded-2xl border border-border bg-card p-6">
+      <section className="mt-8 rounded-2xl border border-border bg-card shadow-card p-6">
         {open ? (
           <div>
             <p className="text-sm text-muted-foreground">
@@ -164,7 +164,7 @@ function Results({ session, rows }: { session: Session; rows: ResponseRow[] }) {
     const max = Math.max(...byC.flatMap((g) => g.xs), 1)
     return (
       <div data-testid="results">
-        <h2 className="text-lg font-semibold">How old was Gandhi when he died? (actual: 78)</h2>
+        <h2 className="font-display text-xl font-bold">How old was Gandhi when he died? (actual: 78)</h2>
         <p className="text-sm text-muted-foreground">{exp.prediction}</p>
         <div className="mt-5 space-y-6">
           {byC.map((g) => (
@@ -207,7 +207,7 @@ function Results({ session, rows }: { session: Session; rows: ResponseRow[] }) {
     })
     return (
       <div data-testid="results">
-        <h2 className="text-lg font-semibold">Who picked the sure option (Program A)?</h2>
+        <h2 className="font-display text-xl font-bold">Who picked the sure option (Program A)?</h2>
         <p className="text-sm text-muted-foreground">{exp.prediction} Both programs have the same expected outcome.</p>
         <div className="mt-5 space-y-5">
           {byC.map((g) => (
@@ -233,7 +233,7 @@ function Results({ session, rows }: { session: Session; rows: ResponseRow[] }) {
   const slower = rs.filter((r) => r.incongruentMs! > r.congruentMs!).length
   return (
     <div data-testid="results">
-      <h2 className="text-lg font-semibold">Average reaction time (correct trials)</h2>
+      <h2 className="font-display text-xl font-bold">Average reaction time (correct trials)</h2>
       <p className="text-sm text-muted-foreground">{exp.prediction}</p>
       <div className="mt-5 space-y-5">
         <Bar label="Congruent (RED in red)" value={con} max={max} display={`${con.toFixed(0)} ms`} tone="bg-emerald-500" />

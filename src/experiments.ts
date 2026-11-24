@@ -19,6 +19,10 @@ export interface ExperimentDef {
   tagline: string
   /** Area of cognitive science, for the student's lab notebook. */
   area: Area
+  /** Rough time a participant needs. */
+  minutes: string
+  /** What participants do, described neutrally (safe to show before taking part). */
+  task: string
   /** One fixed sentence a student keeps (same for everyone, so it isn't per-person AI output). */
   takeaway: string
   /**
@@ -56,6 +60,8 @@ export const EXPERIMENTS: Record<ExperimentId, ExperimentDef> = {
     name: 'Anchoring',
     tagline: 'Does an absurd number change your best guess?',
     area: 'Judgment & decision-making',
+    minutes: '~1 min',
+    task: 'Answer one yes/no question, then make one numerical estimate.',
     takeaway: 'A number you see first can pull later estimates toward it, even when that number is obviously unrealistic.',
     neutralLabel: 'Estimation study',
     why: {
@@ -90,6 +96,8 @@ export const EXPERIMENTS: Record<ExperimentId, ExperimentDef> = {
     name: 'Framing',
     tagline: 'Same outcomes, different words — does the choice flip?',
     area: 'Judgment & decision-making',
+    minutes: '~1 min',
+    task: 'Read a short scenario and choose between two programs.',
     takeaway: 'Describing the same outcome as a gain or a loss changes how much risk people are willing to take.',
     neutralLabel: 'Decision-making study',
     why: {
@@ -124,6 +132,8 @@ export const EXPERIMENTS: Record<ExperimentId, ExperimentDef> = {
     name: 'Stroop',
     tagline: 'Name the ink color, not the word.',
     area: 'Cognitive control & attention',
+    minutes: '~1 min',
+    task: `Tap the matching button for ${16} quick on-screen trials, as fast as you can.`,
     takeaway: 'Reading is so automatic that it interferes with naming the ink color; overriding it takes control, and time.',
     neutralLabel: 'Reaction-time study',
     why: {

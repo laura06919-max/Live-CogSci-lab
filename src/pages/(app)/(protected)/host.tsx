@@ -49,7 +49,7 @@ export default function HostPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-3xl font-bold tracking-tight">Run a live experiment</h1>
+      <h1 className="font-display text-3xl font-bold sm:text-4xl">Run a live experiment</h1>
       <p className="mt-2 text-muted-foreground">
         Pick a classic effect. Your room joins with a 5-letter code, the server randomly assigns
         conditions, and results build up live on your screen.

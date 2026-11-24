@@ -21,7 +21,7 @@ export default function JoinPage() {
 
   return (
     <div className="mx-auto flex max-w-sm flex-col items-center px-4 py-16 text-center">
-      <h1 className="text-3xl font-bold tracking-tight">Join an experiment</h1>
+      <h1 className="font-display text-3xl font-bold sm:text-4xl">Join an experiment</h1>
       <p className="mt-2 text-muted-foreground">Enter the 5-letter code on the screen.</p>
       <form
         className="mt-8 flex w-full flex-col gap-3"
@@ -44,7 +44,7 @@ export default function JoinPage() {
           className="h-14 text-center font-mono text-3xl tracking-[0.4em]"
           placeholder="ABCDE"
         />
-        <Button type="submit" disabled={code.length !== 5}>
+        <Button type="submit" className="h-12 text-base" disabled={code.length !== 5}>
           Join
         </Button>
       </form>

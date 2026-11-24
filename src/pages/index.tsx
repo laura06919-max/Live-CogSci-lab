@@ -18,14 +18,15 @@ export default function Landing() {
       <Seo {...seo} path="/" />
       <div data-testid="static-landing" className="min-h-screen bg-background text-foreground">
         <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5">
-          <span className="font-semibold tracking-tight">Bias Mirror <span className="font-normal text-muted-foreground">· Live CogSci Lab</span></span>
-          <Link to="/join" className="text-sm underline-offset-4 hover:underline">
-            I have a code
-          </Link>
+          <span className="font-display text-lg font-bold">Bias Mirror <span className="font-sans text-sm font-normal text-muted-foreground">· Live CogSci Lab</span></span>
+          <nav className="flex gap-4 text-sm">
+            <Link to="/discover" className="underline-offset-4 hover:underline">Discover</Link>
+            <Link to="/join" className="underline-offset-4 hover:underline">I have a code</Link>
+          </nav>
         </header>
         <main className="mx-auto max-w-5xl px-4 pb-20 pt-10">
-          <p className="font-mono text-sm text-muted-foreground">me → us → the research</p>
-          <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
+          <p className="font-mono text-sm text-primary">me → us → the research</p>
+          <h1 className="mt-3 max-w-3xl font-display text-4xl font-bold leading-[1.05] sm:text-6xl">
             See your decision, your room, and the research side by side.
           </h1>
           <p className="mt-5 max-w-xl text-lg text-muted-foreground">
@@ -39,14 +40,17 @@ export default function Landing() {
             >
               Host a session
             </Link>
-            <Link to="/join" className="inline-flex items-center rounded-full border border-border px-6 py-3 font-medium hover:bg-muted">
+            <Link to="/join" className="inline-flex items-center rounded-full border border-border bg-card px-6 py-3 font-medium hover:bg-muted">
               Join with a code
+            </Link>
+            <Link to="/discover" className="inline-flex items-center px-3 py-3 font-medium text-primary hover:underline">
+              Browse experiments →
             </Link>
           </div>
           <ol className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map((s) => (
-              <li key={s.n} className="rounded-2xl border border-border p-5">
-                <span className="font-mono text-sm text-muted-foreground">{s.n}</span>
+              <li key={s.n} className="rounded-2xl border border-border bg-card p-5 shadow-card">
+                <span className="font-display text-2xl font-bold text-primary">{s.n}</span>
                 <h2 className="mt-2 font-semibold">{s.t}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">{s.d}</p>
               </li>
