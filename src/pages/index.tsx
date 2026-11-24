@@ -8,8 +8,8 @@ import { seo } from '../seo'
 const STEPS = [
   { n: '1', t: 'Host picks an effect', d: 'Anchoring, framing or Stroop. You get a 5-letter code for the projector.' },
   { n: '2', t: 'The room joins on phones', d: 'The server secretly splits people into conditions. Nobody knows which group they are in.' },
-  { n: '3', t: 'Reveal, live', d: 'Close the session and the room sees its own bias, charted from its own answers.' },
-  { n: '4', t: 'Explain, with sources', d: 'Google Scholar finds the original papers; Claude explains your numbers citing only those.' },
+  { n: '3', t: 'Predict, then reveal', d: 'Everyone guesses how big the effect will be. Then the room sees its real result, live.' },
+  { n: '4', t: 'Your personal mirror', d: 'Every phone shows me → us → research, plus an AI debrief that may cite only the classic papers.' },
 ]
 
 export default function Landing() {
@@ -18,19 +18,19 @@ export default function Landing() {
       <Seo {...seo} path="/" />
       <div data-testid="static-landing" className="min-h-screen bg-background text-foreground">
         <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5">
-          <span className="font-semibold tracking-tight">Live CogSci Lab</span>
+          <span className="font-semibold tracking-tight">Bias Mirror <span className="font-normal text-muted-foreground">· Live CogSci Lab</span></span>
           <Link to="/join" className="text-sm underline-offset-4 hover:underline">
             I have a code
           </Link>
         </header>
         <main className="mx-auto max-w-5xl px-4 pb-20 pt-10">
-          <p className="font-mono text-sm text-muted-foreground">anchoring · framing · stroop</p>
+          <p className="font-mono text-sm text-muted-foreground">me → us → the research</p>
           <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
-            Don&apos;t lecture about cognitive bias. Make the room show it.
+            See your decision, your room, and the research side by side.
           </h1>
           <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-            Run a classic psychology experiment with everyone in the room in under two minutes. Answers sync live,
-            conditions are randomized on the server, and the explanation cites real papers.
+            Run anchoring, framing or Stroop with everyone in the room. Each person predicts the effect, then at the
+            reveal their phone shows what they did, what the room did, and what the published studies found.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link

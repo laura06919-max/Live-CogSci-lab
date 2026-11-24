@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { Button, Input } from '@/components/ui'
 import { callAction } from '@/lib/actions'
 import {
@@ -9,6 +9,7 @@ import {
   type ResponseRow,
   type Session,
 } from '../../experiments'
+import { Explanation, PredictedVsActual } from './Compare'
 
 interface Props {
   sessionId: string
@@ -16,14 +17,20 @@ interface Props {
   mine: ResponseRow | undefined
 }
 
+type Payload = Record<string, unknown>
+/** Tasks hand their answer up; the parent asks for a prediction, then submits both. */
+const AnswerCtx = createContext<(p: Payload) => void>(() => {})
+
 export default function ParticipantView({ sessionId, session, mine }: Props) {
   const exp = EXPERIMENTS[session.experiment]
+  const open = session.phase !== 'closed'
   const [joinError, setJoinError] = useState<string | null>(null)
+  const [answer, setAnswer] = useState<Payload | null>(null)
   const joining = useRef(false)
 
   // Join once on arrival: the server picks the condition and creates our row.
   useEffect(() => {
-    if (mine || session.phase !== 'open' || joining.current) return
+    if (mine || !open || joining.current) return
     joining.current = true
     callAction('joinSession', { sessionId }).then((r) => {
       if (!r.success) {
@@ -31,62 +38,165 @@ export default function ParticipantView({ sessionId, session, mine }: Props) {
         joining.current = false
       }
     })
-  }, [mine, session.phase, sessionId])
+  }, [mine, open, sessionId])
+
+  let body
+  if (mine?.submitted) body = <Debrief session={session} mine={mine} />
+  else if (!open) body = <p className="mt-6 text-lg">The host has closed this session. Look at the main screen for results.</p>
+  else if (joinError) body = <p className="mt-6 text-destructive">{joinError}</p>
+  else if (!mine) body = <p className="mt-6 text-muted-foreground">Joining…</p>
+  else if (answer) body = <Predict sessionId={sessionId} session={session} answer={answer} />
+  else if (exp.id === 'anchoring') body = <Anchoring sessionId={sessionId} condition={mine.condition} />
+  else if (exp.id === 'framing') body = <Framing sessionId={sessionId} condition={mine.condition} />
+  else body = <Stroop sessionId={sessionId} />
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-10">
-      <p className="text-sm uppercase tracking-widest text-muted-foreground">{session.title}</p>
-      {mine?.submitted ? (
-        <Done session={session} />
-      ) : session.phase !== 'open' ? (
-        <p className="mt-6 text-lg">The host has closed this session. Look at the main screen for results.</p>
-      ) : joinError ? (
-        <p className="mt-6 text-destructive">{joinError}</p>
-      ) : !mine ? (
-        <p className="mt-6 text-muted-foreground">Joining…</p>
-      ) : exp.id === 'anchoring' ? (
-        <Anchoring sessionId={sessionId} condition={mine.condition} />
-      ) : exp.id === 'framing' ? (
-        <Framing sessionId={sessionId} condition={mine.condition} />
-      ) : (
-        <Stroop sessionId={sessionId} />
-      )}
-    </div>
+    <AnswerCtx.Provider value={setAnswer}>
+      <div className="mx-auto max-w-lg px-4 py-10">
+        <p className="text-sm uppercase tracking-widest text-muted-foreground">{session.title}</p>
+        {body}
+      </div>
+    </AnswerCtx.Provider>
   )
 }
 
-function Done({ session }: { session: Session }) {
-  return (
-    <div data-testid="done" className="mt-6">
-      <h1 className="text-2xl font-bold">Thanks — you&apos;re in!</h1>
-      <p className="mt-2 text-muted-foreground">
-        {session.phase === 'open'
-          ? 'Watch the main screen. The host will reveal results when everyone is done.'
-          : 'Results are up on the main screen.'}
-      </p>
-      {session.phase === 'closed' && session.explanation && (
-        <div className="mt-6 whitespace-pre-wrap rounded-xl border border-border bg-card p-4 text-sm leading-relaxed">
-          {session.explanation}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function useSubmit(sessionId: string) {
+/** Step 2: before anyone sees results, predict the size of the room's effect. */
+function Predict({ sessionId, session, answer }: { sessionId: string; session: Session; answer: Payload }) {
+  const exp = EXPERIMENTS[session.experiment]
+  const [value, setValue] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
-  const submit = useCallback(
-    async (payload: Record<string, unknown>) => {
-      setBusy(true)
-      setErr(null)
-      const r = await callAction('submitResponse', { sessionId, ...payload })
-      if (!r.success) setErr(r.error)
-      setBusy(false)
-    },
-    [sessionId],
+
+  async function send(extra: Payload) {
+    setBusy(true)
+    setErr(null)
+    const r = await callAction('submitResponse', { sessionId, ...answer, ...extra })
+    if (!r.success) setErr(r.error)
+    setBusy(false)
+  }
+
+  return (
+    <div data-testid="predict" className="mt-6">
+      <p className="text-sm text-muted-foreground">Answer saved locally. One last question before you send it:</p>
+      <h1 className="mt-2 text-xl font-bold leading-snug">{exp.predictQuestion}</h1>
+      {exp.id === 'framing' ? (
+        <div className="mt-5 grid gap-3">
+          {[
+            ['gain', 'When it says "people will be saved"'],
+            ['loss', 'When it says "people will die"'],
+            ['same', 'No difference, it\'s the same choice'],
+          ].map(([k, label]) => (
+            <Button key={k} variant="outline" disabled={busy} data-testid={`predict-${k}`} onClick={() => send({ predictedFrame: k })}>
+              {label}
+            </Button>
+          ))}
+        </div>
+      ) : (
+        <form
+          className="mt-5"
+          onSubmit={(e) => {
+            e.preventDefault()
+            send({ prediction: Number(value) })
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <Input
+              data-testid="prediction"
+              className="h-14 text-2xl"
+              type="number"
+              inputMode="numeric"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              autoFocus
+            />
+            <span className="text-muted-foreground">{exp.id === 'anchoring' ? 'years' : 'ms'}</span>
+          </div>
+          <Button className="mt-4 w-full" type="submit" disabled={busy || value === ''}>
+            {busy ? 'Sending…' : 'Send my answer'}
+          </Button>
+        </form>
+      )}
+      {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
+    </div>
   )
-  return { busy, err, submit }
+}
+
+/** Bias Mirror: me → us → evidence. Uses only my own row plus the room stats the server published at reveal. */
+function Debrief({ session, mine }: { session: Session; mine: ResponseRow }) {
+  const exp = EXPERIMENTS[session.experiment]
+  const stats = session.stats
+  if (session.phase !== 'closed' || !stats) {
+    return (
+      <div data-testid="done" className="mt-6">
+        <h1 className="text-2xl font-bold">Sent. Now wait for the reveal.</h1>
+        <p className="mt-2 text-muted-foreground">
+          When the host reveals the results, this screen will show your answer, the room&apos;s result and the research side by side.
+        </p>
+      </div>
+    )
+  }
+  const g = stats.groups
+  const other = exp.conditions.find((c) => c !== mine.condition)
+  const f = (v: number | null | undefined) => (v == null ? '—' : v.toFixed(0))
+
+  let me: string
+  let us: string
+  if (exp.id === 'anchoring') {
+    me = `You saw the ${mine.condition === 'high' ? 'high' : 'low'} anchor: ${ANCHORS[mine.condition]}. You guessed ${mine.estimate}.`
+    us = `Your group averaged ${f(g[mine.condition]?.mean)}; the ${ANCHORS[other ?? 'low']}-anchor group averaged ${f(g[other ?? 'low']?.mean)}. The room showed a ${f(stats.effect)}-year anchoring gap.`
+  } else if (exp.id === 'framing') {
+    const yours = mine.condition === 'gain' ? '"200 people will be saved"' : '"400 people will die"'
+    me = `You saw the ${mine.condition === 'gain' ? 'lives-saved' : 'lives-lost'} wording (${yours}) and chose the ${mine.choice === 'sure' ? 'sure option (A)' : 'gamble (B)'}.`
+    us = `${f(g[mine.condition]?.pct)}% of your group chose the sure option, vs. ${f(g[other ?? 'gain']?.pct)}% of the other group, who saw the same choice worded the other way.`
+  } else {
+    const gap = mine.incongruentMs != null && mine.congruentMs != null ? mine.incongruentMs - mine.congruentMs : null
+    me = `You averaged ${f(mine.congruentMs)} ms on matching words and ${f(mine.incongruentMs)} ms on mismatched ones: ${gap == null ? '—' : gap >= 0 ? `${gap} ms slower` : `${-gap} ms faster`}.`
+    us = `The room's average interference was ${f(stats.effect)} ms (${f(stats.congruentMs)} vs. ${f(stats.incongruentMs)} ms).`
+  }
+
+  return (
+    <div data-testid="debrief" className="mt-6 space-y-5">
+      <h1 className="text-2xl font-bold">Your bias mirror</h1>
+      <div className="space-y-3">
+        <Row k="Me" v={me} />
+        <Row k="Us" v={us} />
+        {typeof mine.prediction === 'number' && (
+          <Row
+            k="You predicted"
+            v={`${mine.prediction} ${exp.id === 'anchoring' ? 'years' : 'ms'}. The room's actual effect was ${f(stats.effect)}.`}
+          />
+        )}
+        {mine.predictedFrame && (
+          <Row
+            k="You predicted"
+            v={mine.predictedFrame === 'same' ? 'No difference between wordings.' : `The "${mine.predictedFrame === 'gain' ? 'saved' : 'die'}" wording would get more sure picks.`}
+          />
+        )}
+      </div>
+      <PredictedVsActual experiment={session.experiment} stats={stats} />
+      {session.explanation ? (
+        <Explanation text={session.explanation} sources={session.sources} />
+      ) : (
+        <p className="text-sm text-muted-foreground">The host can add an explanation with sources. It will appear here.</p>
+      )}
+    </div>
+  )
+}
+
+function Row({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="rounded-xl border border-border p-4">
+      <div className="text-xs uppercase tracking-widest text-muted-foreground">{k}</div>
+      <div className="mt-1 text-lg leading-snug">{v}</div>
+    </div>
+  )
+}
+
+/** Task components report their answer to the parent (which then asks for a prediction). */
+function useSubmit(_sessionId: string) {
+  const onAnswer = useContext(AnswerCtx)
+  const submit = useCallback(async (payload: Payload) => onAnswer(payload), [onAnswer])
+  return { busy: false, err: null as string | null, submit }
 }
 
 function Anchoring({ sessionId, condition }: { sessionId: string; condition: string }) {

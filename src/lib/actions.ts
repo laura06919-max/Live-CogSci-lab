@@ -4,7 +4,7 @@ export type ActionResponse<T = unknown> = { success: true; data: T } | { success
 
 /** POST to a server action defined in src/actions/index.ts with the caller's JWT. */
 export async function callAction<T = unknown>(
-  name: 'joinSession' | 'submitResponse' | 'explainResults',
+  name: 'joinSession' | 'submitResponse' | 'setPhase' | 'explainResults',
   params: Record<string, unknown>,
 ): Promise<ActionResponse<T>> {
   try {

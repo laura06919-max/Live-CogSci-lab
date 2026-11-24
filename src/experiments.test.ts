@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { makeCode, mean, median, summarize, type ResponseRow } from './experiments'
+import { computeStats, makeCode, mean, median, summarize, titleMatches, type ResponseRow } from './experiments'
 
 const row = (p: Partial<ResponseRow>): ResponseRow => ({
   sessionId: 's', userId: Math.random().toString(), condition: 'within', submitted: true, ...p,
@@ -43,5 +43,37 @@ describe('stats', () => {
 
   it('codes avoid ambiguous letters', () => {
     for (let i = 0; i < 200; i++) expect(makeCode()).toMatch(/^[A-HJ-NP-Z]{5}$/)
+  })
+})
+
+describe('computeStats (room stats published at reveal)', () => {
+  it('anchoring: effect = high mean − low mean, prediction averaged', () => {
+    const s = computeStats('anchoring', [
+      row({ condition: 'low', estimate: 50, prediction: 10 }),
+      row({ condition: 'high', estimate: 80, prediction: 20 }),
+      row({ condition: 'high', estimate: 999, submitted: false }),
+    ])
+    expect(s.n).toBe(2)
+    expect(s.effect).toBe(30)
+    expect(s.predicted).toBe(15)
+    expect(s.summary.at(-1)).toContain('15 years (actual: 30 years)')
+  })
+
+  it('framing: effect in percentage points and prediction votes', () => {
+    const s = computeStats('framing', [
+      row({ condition: 'gain', choice: 'sure', predictedFrame: 'same' }),
+      row({ condition: 'loss', choice: 'risky', predictedFrame: 'gain' }),
+    ])
+    expect(s.effect).toBe(100)
+    expect(s.predictedVotes).toEqual({ gain: 1, loss: 0, same: 1 })
+  })
+})
+
+describe('titleMatches (validating Scholar hits against canonical papers)', () => {
+  it('accepts the same paper with markup/case differences', () => {
+    expect(titleMatches('The <b>framing</b> of decisions and the psychology of choice', 'The framing of decisions and the psychology of choice')).toBe(true)
+  })
+  it('rejects a different paper', () => {
+    expect(titleMatches('Prospect theory: An analysis of decision under risk', 'The framing of decisions and the psychology of choice')).toBe(false)
   })
 })

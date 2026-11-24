@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useMutations } from 'deepspace'
 import { Button, useToast } from '@/components/ui'
 import { callAction } from '@/lib/actions'
-import { ANCHORS, EXPERIMENTS, mean, median, type ResponseRow, type Session } from '../../experiments'
+import { ANCHORS, EXPERIMENTS, computeStats, mean, median, type ResponseRow, type Session } from '../../experiments'
+import Qr from './Qr'
+import { Explanation, PredictedVsActual } from './Compare'
 
 interface Props {
   sessionId: string
@@ -12,9 +13,10 @@ interface Props {
 
 export default function HostView({ sessionId, session, rows }: Props) {
   const exp = EXPERIMENTS[session.experiment]
-  const { ready, put } = useMutations<Session>('sessions')
   const { error } = useToast()
   const [explaining, setExplaining] = useState(false)
+  const [switching, setSwitching] = useState(false)
+  const open = session.phase !== 'closed'
   const joined = rows.length
   const done = rows.filter((r) => r.submitted)
   const joinUrl = typeof window !== 'undefined' ? `${window.location.origin}/join?code=${session.code}` : ''
@@ -24,6 +26,14 @@ export default function HostView({ sessionId, session, rows }: Props) {
     const r = await callAction('explainResults', { sessionId })
     setExplaining(false)
     if (!r.success) error('Could not explain results', r.error)
+  }
+
+  async function togglePhase() {
+    if (!open && session.explanation && !window.confirm('Reopening clears the current results and AI explanation. Continue?')) return
+    setSwitching(true)
+    const r = await callAction('setPhase', { sessionId, phase: open ? 'closed' : 'open' })
+    setSwitching(false)
+    if (!r.success) error('Could not update session', r.error)
   }
 
   return (
@@ -37,30 +47,29 @@ export default function HostView({ sessionId, session, rows }: Props) {
             <span data-testid="submitted-count" className="font-semibold text-foreground">{done.length}</span> answered
           </p>
         </div>
-        <div className="rounded-2xl border border-border bg-card px-6 py-4 text-center">
-          <div className="text-xs uppercase tracking-widest text-muted-foreground">Join at {window.location.host}/join</div>
-          <div data-testid="session-code" className="mt-1 font-mono text-5xl font-bold tracking-[0.25em]">
-            {session.code}
+        <div className="flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4">
+          <Qr value={joinUrl} size={120} />
+          <div className="text-center">
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">Scan, or go to {window.location.host}/join</div>
+            <div data-testid="session-code" className="mt-1 font-mono text-5xl font-bold tracking-[0.25em]">
+              {session.code}
+            </div>
+            <button
+              type="button"
+              className="mt-1 text-xs text-muted-foreground underline"
+              onClick={() => navigator.clipboard?.writeText(joinUrl)}
+            >
+              copy join link
+            </button>
           </div>
-          <button
-            type="button"
-            className="mt-1 text-xs text-muted-foreground underline"
-            onClick={() => navigator.clipboard?.writeText(joinUrl)}
-          >
-            copy join link
-          </button>
         </div>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
-        <Button
-          variant={session.phase === 'open' ? 'default' : 'outline'}
-          disabled={!ready}
-          onClick={() => put(sessionId, { phase: session.phase === 'open' ? 'closed' : 'open' })}
-        >
-          {session.phase === 'open' ? 'Close & reveal results' : 'Reopen for answers'}
+        <Button data-testid="toggle-phase" variant={open ? 'default' : 'outline'} disabled={switching} onClick={togglePhase}>
+          {switching ? '…' : open ? 'Close & reveal results' : 'Reopen for answers'}
         </Button>
-        {session.phase === 'closed' && (
+        {!open && (
           <Button data-testid="explain" variant="outline" disabled={explaining || done.length < 2} onClick={explain}>
             {explaining ? 'Finding papers & writing…' : session.explanation ? 'Regenerate explanation' : 'Explain these results'}
           </Button>
@@ -68,7 +77,7 @@ export default function HostView({ sessionId, session, rows }: Props) {
       </div>
 
       <section className="mt-8 rounded-2xl border border-border bg-card p-6">
-        {session.phase === 'open' ? (
+        {open ? (
           <div>
             <p className="text-sm text-muted-foreground">
               Results are hidden while people answer (so nobody is influenced). Live progress:
@@ -80,31 +89,16 @@ export default function HostView({ sessionId, session, rows }: Props) {
         )}
       </section>
 
-      {session.phase === 'closed' && session.explanation && (
-        <section data-testid="explanation" className="mt-6 rounded-2xl border border-border bg-card p-6">
-          <h2 className="text-lg font-semibold">What just happened</h2>
-          <div className="mt-3 whitespace-pre-wrap leading-relaxed">{session.explanation}</div>
-          {session.sources && session.sources.length > 0 && (
-            <ol className="mt-4 space-y-1 text-sm text-muted-foreground">
-              {session.sources.map((s, i) => (
-                <li key={i}>
-                  [{i + 1}]{' '}
-                  {s.link ? (
-                    <a className="underline" href={s.link} target="_blank" rel="noreferrer">
-                      {s.title}
-                    </a>
-                  ) : (
-                    s.title
-                  )}{' '}
-                  — {s.info}
-                </li>
-              ))}
-            </ol>
-          )}
-          <p className="mt-4 text-xs text-muted-foreground">
-            Written by Claude from this room&apos;s numbers; papers found via Google Scholar. Check the sources before quoting.
-          </p>
+      {!open && done.length > 0 && (
+        <section className="mt-6">
+          <PredictedVsActual experiment={session.experiment} stats={session.stats ?? computeStats(session.experiment, rows)} />
         </section>
+      )}
+
+      {!open && session.explanation && (
+        <div className="mt-6">
+          <Explanation text={session.explanation} sources={session.sources} />
+        </div>
       )}
     </div>
   )

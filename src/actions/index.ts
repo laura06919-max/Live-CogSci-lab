@@ -11,7 +11,8 @@ import type { ActionHandler, ActionResult, ActionTools } from 'deepspace/worker'
 import type { Env } from '../../worker'
 import {
   EXPERIMENTS,
-  summarize,
+  computeStats,
+  titleMatches,
   type ExperimentId,
   type ResponseRow,
   type Session,
@@ -36,22 +37,30 @@ async function findMyResponse(tools: ActionTools, sessionId: string, userId: str
 
 const fail = (error: string): ActionResult<never> => ({ success: false, error })
 
+/** A session with no phase yet (just created) counts as open. */
+const isOpen = (s: Session) => s.phase !== 'closed'
+
+async function loadRows(tools: ActionTools, sessionId: string): Promise<ResponseRow[]> {
+  const all = await tools.query('responses', { where: { sessionId }, limit: 1000 })
+  if (!all.success) return []
+  return (all.data as unknown as { records: Envelope<ResponseRow>[] }).records.map((r) => r.data)
+}
+
 /** Join a session: assign a random condition server-side (idempotent). */
 const joinSession: ActionHandler<Env> = async ({ userId, params, tools }) => {
   const session = await loadSession(tools, params.sessionId)
   if (!session) return fail('Session not found')
   const existing = await findMyResponse(tools, session.recordId, userId)
   if (existing) return { success: true, data: { responseId: existing.recordId } }
-  if (session.data.phase !== 'open') return fail('This session is closed')
+  if (!isOpen(session.data)) return fail('This session is closed')
 
   const conds = EXPERIMENTS[session.data.experiment].conditions
   // Balanced-ish random assignment: put the newcomer in the smaller group,
   // breaking ties randomly. Small classes otherwise end up lopsided.
   let condition = 'within'
   if (conds.length) {
-    const all = await tools.query('responses', { where: { sessionId: session.recordId }, limit: 1000 })
-    const rows = all.success ? (all.data as unknown as { records: Envelope<ResponseRow>[] }).records : []
-    const counts = conds.map((c) => rows.filter((r) => r.data.condition === c).length)
+    const rows = await loadRows(tools, session.recordId)
+    const counts = conds.map((c) => rows.filter((r) => r.condition === c).length)
     const min = Math.min(...counts)
     const candidates = conds.filter((_, i) => counts[i] === min)
     condition = candidates[Math.floor(Math.random() * candidates.length)]
@@ -60,6 +69,8 @@ const joinSession: ActionHandler<Env> = async ({ userId, params, tools }) => {
   const created = await tools.create('responses', {
     sessionId: session.recordId,
     userId,
+    // The host is the only other person allowed to read this row (read: 'shared').
+    collaborators: [session.data.hostId],
     condition,
     submitted: false,
   })
@@ -76,7 +87,7 @@ const joinSession: ActionHandler<Env> = async ({ userId, params, tools }) => {
 const submitResponse: ActionHandler<Env> = async ({ userId, params, tools }) => {
   const session = await loadSession(tools, params.sessionId)
   if (!session) return fail('Session not found')
-  if (session.data.phase !== 'open') return fail('The host has closed this session')
+  if (!isOpen(session.data)) return fail('The host has closed this session')
   const mine = await findMyResponse(tools, session.recordId, userId)
   if (!mine) return fail('Join the session first')
   if (mine.data.submitted) return fail('You already answered')
@@ -101,65 +112,97 @@ const submitResponse: ActionHandler<Env> = async ({ userId, params, tools }) => 
     }
     patch = { congruentMs: Math.round(congruentMs), incongruentMs: Math.round(incongruentMs), accuracy }
   }
+  // Prediction of the room-level effect (asked after answering, before the reveal). Optional.
+  if (exp === 'framing') {
+    if (params.predictedFrame === 'gain' || params.predictedFrame === 'loss' || params.predictedFrame === 'same') {
+      patch.predictedFrame = params.predictedFrame
+    }
+  } else {
+    const p = num(params.prediction, exp === 'anchoring' ? -200 : -5000, exp === 'anchoring' ? 200 : 5000)
+    if (p !== null) patch.prediction = Math.round(p)
+  }
   return tools.update('responses', mine.recordId, { ...patch, submitted: true })
 }
 
 /**
- * Host-only: look up real papers (Google Scholar), then ask Claude to explain
- * this room's results citing only those papers. Owner-billed, so it is gated to
- * the session host and rate-limited per session.
+ * Host-only: close (reveal) or reopen a session. Closing computes the room's
+ * stats server-side and stores them on the session, which is how participants
+ * (who can only read their own row) get the group results for their debrief.
+ * Reopening clears stats and the AI explanation so nothing stale is shown.
+ */
+const setPhase: ActionHandler<Env> = async ({ userId, params, tools }) => {
+  const session = await loadSession(tools, params.sessionId)
+  if (!session) return fail('Session not found')
+  if (session.data.hostId !== userId) return fail('Only the host can do that')
+  if (params.phase === 'closed') {
+    const stats = computeStats(session.data.experiment, await loadRows(tools, session.recordId))
+    return tools.update('sessions', session.recordId, { phase: 'closed', stats })
+  }
+  if (params.phase === 'open') {
+    return tools.update('sessions', session.recordId, {
+      phase: 'open',
+      stats: null,
+      explanation: '',
+      sources: [],
+      explainedAt: 0,
+    })
+  }
+  return fail('Unknown phase')
+}
+
+/**
+ * Host-only: explain this room's results, grounded in fixed canonical papers.
+ * Google Scholar only looks up a link for each canonical paper (accepted when
+ * the title matches); Claude is told to cite only those numbered papers.
+ * Owner-billed, so gated to the host, to closed sessions, and to once a minute.
  */
 const explainResults: ActionHandler<Env> = async ({ userId, params, tools }) => {
   const session = await loadSession(tools, params.sessionId)
   if (!session) return fail('Session not found')
   if (session.data.hostId !== userId) return fail('Only the host can generate the explanation')
+  if (isOpen(session.data)) return fail('Close the session first')
   if (session.data.explainedAt && Date.now() - session.data.explainedAt < 60_000) {
     return fail('Please wait a minute before regenerating')
   }
 
-  const all = await tools.query('responses', { where: { sessionId: session.recordId }, limit: 1000 })
-  if (!all.success) return all
-  const rows = (all.data as unknown as { records: Envelope<ResponseRow>[] }).records.map((r) => r.data)
   const exp = EXPERIMENTS[session.data.experiment as ExperimentId]
-  const stats = summarize(exp.id, rows)
+  // Recompute from the database rather than trusting stored or client numbers.
+  const stats = computeStats(exp.id, await loadRows(tools, session.recordId))
   if (stats.n < 2) return fail('Need at least 2 submitted responses first')
 
   // Claim the rate-limit slot before spending credits.
   await tools.update('sessions', session.recordId, { explainedAt: Date.now() })
 
-  // 1) Ground truth: real papers from Google Scholar.
-  let sources: Source[] = []
-  const scholar = await tools.integration<unknown>('scholar/search-papers', { q: exp.scholarQuery, num: 5 })
-  if (scholar.success) {
-    const body = unwrap(scholar.data) as { organic_results?: ScholarHit[] }
-    sources = (body.organic_results ?? []).slice(0, 4).map((h) => ({
-      title: String(h.title ?? 'Untitled'),
-      link: String(h.link ?? h.resources?.[0]?.link ?? ''),
-      info: String(h.publication_info?.summary ?? ''),
-    }))
-  }
+  // 1) Canonical sources; Scholar just finds each one's link.
+  const sources: Source[] = await Promise.all(
+    exp.canonical.map(async (c) => {
+      const r = await tools.integration<unknown>('scholar/search-papers', { q: c.title, num: 3 })
+      const hits = r.success ? ((unwrap(r.data) as { organic_results?: ScholarHit[] }).organic_results ?? []) : []
+      const hit = hits.find((h) => titleMatches(String(h.title ?? ''), c.title))
+      return { title: c.title, info: c.cite, link: hit ? String(hit.link ?? hit.resources?.[0]?.link ?? '') : '' }
+    }),
+  )
 
-  // 2) Explanation grounded in those papers.
-  const sourceList = sources.length
-    ? sources.map((s, i) => `[${i + 1}] ${s.title} — ${s.info}`).join('\n')
-    : '(no sources found — do not cite any papers)'
+  // 2) Explanation: me/us/evidence, including how well the room predicted itself.
   const prompt = [
     `Experiment: ${exp.name}. ${exp.tagline}`,
     `What the classic effect predicts: ${exp.prediction}`,
     `This room's results (${stats.n} participants):`,
-    ...stats.lines.map((l) => `- ${l}`),
+    ...stats.summary.map((l) => `- ${l}`),
     '',
-    'Papers you may cite (cite as [1], [2]; never cite anything else):',
-    sourceList,
+    'Papers you may cite (cite as [1], [2]; never cite anything else, never invent numbers from them):',
+    ...sources.map((s, i) => `[${i + 1}] ${s.title} — ${s.info}`),
   ].join('\n')
 
   const llm = await tools.integration<unknown>('anthropic/chat-completion', {
     max_tokens: 700,
     temperature: 0.4,
     system:
-      'You explain live classroom psychology demos to university students. Be casual and clear, no jargon without a one-line gloss. ' +
-      'In 3 short paragraphs: (1) what happened in THIS room, quoting the numbers; (2) whether it matches the classic finding and why the bias happens; ' +
-      '(3) one honest caveat about small, non-random classroom samples. Only cite the numbered papers provided. Under 220 words. Plain text, no markdown headers.',
+      'You debrief a live classroom psychology demo for university students. Be casual and clear; gloss any jargon in a few words. ' +
+      'Write 3 short paragraphs: (1) what happened in THIS room, quoting its numbers; ' +
+      '(2) how that compares with the classic finding in the cited papers, and why the bias happens; ' +
+      '(3) how well the room predicted its own result (people usually underestimate their own bias), plus one honest caveat about small, non-random classroom samples. ' +
+      'Only cite the numbered papers provided. Under 230 words. Plain text, no markdown headers or bold.',
     messages: [{ role: 'user', content: prompt }],
   })
   if (!llm.success) return llm
@@ -201,5 +244,6 @@ function extractText(x: unknown): string {
 export const actions: Record<string, ActionHandler<Env>> = {
   joinSession,
   submitResponse,
+  setPhase,
   explainResults,
 }

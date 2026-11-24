@@ -33,7 +33,6 @@ export default function HostPage() {
             hostId: userId,
             title: title.trim() || `${EXPERIMENTS[experiment].name} demo`,
             experiment,
-            phase: 'open',
           })
           navigate(`/lab/${id}`)
           return
@@ -103,7 +102,7 @@ export default function HostPage() {
                   <span className="ml-2 text-sm text-muted-foreground">{EXPERIMENTS[r.data.experiment]?.name}</span>
                 </span>
                 <span className="font-mono text-sm">
-                  {r.data.code} · {r.data.phase === 'open' ? 'open' : 'closed'}
+                  {r.data.code} · {r.data.phase === 'closed' ? 'revealed' : 'open'}
                 </span>
               </Link>
             </li>
