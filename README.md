@@ -111,15 +111,15 @@ owner's credits), and recomputes stats from the database rather than trusting cl
    aggregates only (no rows, ids, codes, titles or timestamps), with at least 10 participants and every
    subgroup of at least 5. It's readable by everyone (`'*': { read: true }`) and shown under each experiment
    on Discover. Sessions themselves stay private, because they hold the title, code and host id.
-2b. Course matching: students optionally add their current courses; experiments already carry concept tags,
+3. Course matching: students optionally add their current courses; experiments already carry concept tags,
    so a notebook entry could say "related to 2 of your courses." Course-to-concept mappings should be
    curated by instructors, not guessed by AI.
-3. Complement UCSD SONA rather than replace it: SONA stays the system for scheduling and research credit,
+4. Complement UCSD SONA rather than replace it: SONA stays the system for scheduling and research credit,
    and this could provide an approved, learning-focused debrief.
-4. Add courses/sections so instructors can see a quarter's sessions together (aggregates only).
-5. Show confidence intervals once a group has 10 or more answers, and warn about very small groups.
-6. Let instructors export CSV and compare sections over a term.
-7. Add more paradigms and areas (memory, perception, language), e.g. the Linda problem or the Müller-Lyer illusion, through the same `EXPERIMENTS` registry,
+5. Add courses/sections so instructors can see a quarter's sessions together (aggregates only).
+6. Show confidence intervals once a group has 10 or more answers, and warn about very small groups.
+7. Let instructors export CSV and compare sections over a term.
+8. Add more paradigms and areas (memory, perception, language), e.g. the Linda problem or the Müller-Lyer illusion, through the same `EXPERIMENTS` registry,
    each with canonical sources.
 
 ## Run it
