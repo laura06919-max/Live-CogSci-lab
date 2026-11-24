@@ -43,4 +43,9 @@ test('host runs a framing session; participant gets a personal debrief', async (
   await expect(participant.page.getByTestId('debrief')).toBeVisible({ timeout: 15_000 })
   await expect(participant.page.getByTestId('debrief')).toContainText('chose the sure option')
 
+  // The experiment now appears in the participant's private lab notebook.
+  await participant.page.goto('/notebook')
+  await expect(participant.page.getByTestId('notebook-entry').first()).toContainText('Framing effect', { timeout: 15_000 })
+  await expect(participant.page.getByTestId('notebook-entry').first()).toContainText('Judgment & decision-making')
+
 })

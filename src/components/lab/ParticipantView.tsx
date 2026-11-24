@@ -6,6 +6,7 @@ import {
   EXPERIMENTS,
   STROOP_COLORS,
   STROOP_TRIALS,
+  personalLines,
   type ResponseRow,
   type Session,
 } from '../../experiments'
@@ -135,24 +136,8 @@ function Debrief({ session, mine }: { session: Session; mine: ResponseRow }) {
       </div>
     )
   }
-  const g = stats.groups
-  const other = exp.conditions.find((c) => c !== mine.condition)
   const f = (v: number | null | undefined) => (v == null ? '—' : v.toFixed(0))
-
-  let me: string
-  let us: string
-  if (exp.id === 'anchoring') {
-    me = `You saw the ${mine.condition === 'high' ? 'high' : 'low'} anchor: ${ANCHORS[mine.condition]}. You guessed ${mine.estimate}.`
-    us = `Your group averaged ${f(g[mine.condition]?.mean)}; the ${ANCHORS[other ?? 'low']}-anchor group averaged ${f(g[other ?? 'low']?.mean)}. The room showed a ${f(stats.effect)}-year anchoring gap.`
-  } else if (exp.id === 'framing') {
-    const yours = mine.condition === 'gain' ? '"200 people will be saved"' : '"400 people will die"'
-    me = `You saw the ${mine.condition === 'gain' ? 'lives-saved' : 'lives-lost'} wording (${yours}) and chose the ${mine.choice === 'sure' ? 'sure option (A)' : 'gamble (B)'}.`
-    us = `${f(g[mine.condition]?.pct)}% of your group chose the sure option, vs. ${f(g[other ?? 'gain']?.pct)}% of the other group, who saw the same choice worded the other way.`
-  } else {
-    const gap = mine.incongruentMs != null && mine.congruentMs != null ? mine.incongruentMs - mine.congruentMs : null
-    me = `You averaged ${f(mine.congruentMs)} ms on matching words and ${f(mine.incongruentMs)} ms on mismatched ones: ${gap == null ? '—' : gap >= 0 ? `${gap} ms slower` : `${-gap} ms faster`}.`
-    us = `The room's average interference was ${f(stats.effect)} ms (${f(stats.congruentMs)} vs. ${f(stats.incongruentMs)} ms).`
-  }
+  const { me, us } = personalLines(session, mine)
 
   return (
     <div data-testid="debrief" className="mt-6 space-y-5">
@@ -173,7 +158,11 @@ function Debrief({ session, mine }: { session: Session; mine: ResponseRow }) {
           />
         )}
       </div>
+      <Row k="Takeaway" v={exp.takeaway} />
       <PredictedVsActual experiment={session.experiment} stats={stats} />
+      <p className="text-xs text-muted-foreground">
+        A classroom demonstration, not a cognitive assessment: one session, a few trials, phone timing.
+      </p>
       {session.explanation ? (
         <Explanation text={session.explanation} sources={session.sources} />
       ) : (

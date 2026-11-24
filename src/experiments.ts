@@ -9,10 +9,18 @@
 
 export type ExperimentId = 'anchoring' | 'framing' | 'stroop'
 
+/** Cognitive-science areas used to organize a student's lab notebook. */
+export const AREAS = ['Judgment & decision-making', 'Cognitive control & attention'] as const
+export type Area = (typeof AREAS)[number]
+
 export interface ExperimentDef {
   id: ExperimentId
   name: string
   tagline: string
+  /** Area of cognitive science, for the student's lab notebook. */
+  area: Area
+  /** One fixed sentence a student keeps (same for everyone, so it isn't per-person AI output). */
+  takeaway: string
   /** Between-subjects conditions. Empty = within-subjects (everyone does everything). */
   conditions: string[]
   conditionLabels: Record<string, string>
@@ -35,6 +43,8 @@ export const EXPERIMENTS: Record<ExperimentId, ExperimentDef> = {
     id: 'anchoring',
     name: 'Anchoring',
     tagline: 'Does an absurd number change your best guess?',
+    area: 'Judgment & decision-making',
+    takeaway: 'A number you see first can pull later estimates toward it, even when that number is obviously unrealistic.',
     conditions: ['low', 'high'],
     conditionLabels: { low: 'Anchor: 9', high: 'Anchor: 140' },
     canonical: [
@@ -55,6 +65,8 @@ export const EXPERIMENTS: Record<ExperimentId, ExperimentDef> = {
     id: 'framing',
     name: 'Framing',
     tagline: 'Same outcomes, different words — does the choice flip?',
+    area: 'Judgment & decision-making',
+    takeaway: 'Describing the same outcome as a gain or a loss changes how much risk people are willing to take.',
     conditions: ['gain', 'loss'],
     conditionLabels: { gain: 'Framed as lives saved', loss: 'Framed as lives lost' },
     canonical: [
@@ -75,6 +87,8 @@ export const EXPERIMENTS: Record<ExperimentId, ExperimentDef> = {
     id: 'stroop',
     name: 'Stroop',
     tagline: 'Name the ink color, not the word.',
+    area: 'Cognitive control & attention',
+    takeaway: 'Reading is so automatic that it interferes with naming the ink color; overriding it takes control, and time.',
     conditions: [],
     conditionLabels: {},
     canonical: [
@@ -279,6 +293,32 @@ export function titleMatches(found: string, canonical: string): boolean {
   const a = norm(found)
   const b = norm(canonical)
   return a.length > 10 && (a.includes(b.slice(0, 30)) || b.includes(a.slice(0, 30)))
+}
+
+/** "Me" and "Us" sentences for one participant after the reveal (debrief + lab notebook). */
+export function personalLines(session: Session, mine: ResponseRow): { me: string; us: string } {
+  const exp = EXPERIMENTS[session.experiment]
+  const stats = session.stats!
+  const g = stats.groups
+  const other = exp.conditions.find((c) => c !== mine.condition)
+  const f = (v: number | null | undefined) => (v == null ? '—' : v.toFixed(0))
+
+  let me: string
+  let us: string
+  if (exp.id === 'anchoring') {
+    me = `You saw the ${mine.condition === 'high' ? 'high' : 'low'} anchor: ${ANCHORS[mine.condition]}. You guessed ${mine.estimate}.`
+    us = `Your group averaged ${f(g[mine.condition]?.mean)}; the ${ANCHORS[other ?? 'low']}-anchor group averaged ${f(g[other ?? 'low']?.mean)}. The room showed a ${f(stats.effect)}-year anchoring gap.`
+  } else if (exp.id === 'framing') {
+    const yours = mine.condition === 'gain' ? '"200 people will be saved"' : '"400 people will die"'
+    me = `You saw the ${mine.condition === 'gain' ? 'lives-saved' : 'lives-lost'} wording (${yours}) and chose the ${mine.choice === 'sure' ? 'sure option (A)' : 'gamble (B)'}.`
+    us = `${f(g[mine.condition]?.pct)}% of your group chose the sure option, vs. ${f(g[other ?? 'gain']?.pct)}% of the other group, who saw the same choice worded the other way.`
+  } else {
+    const gap = mine.incongruentMs != null && mine.congruentMs != null ? mine.incongruentMs - mine.congruentMs : null
+    me = `You averaged ${f(mine.congruentMs)} ms on matching words and ${f(mine.incongruentMs)} ms on mismatched ones: ${gap == null ? '—' : gap >= 0 ? `${gap} ms slower` : `${-gap} ms faster`}.`
+    us = `The room's average interference was ${f(stats.effect)} ms (${f(stats.congruentMs)} vs. ${f(stats.incongruentMs)} ms).`
+  }
+
+  return { me, us }
 }
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ' // no I/O to avoid misreads on a projector

@@ -16,8 +16,9 @@ export interface NavItem {
 }
 
 export const nav: NavItem[] = [
-  { path: '/host', label: 'Host' },
+  { path: '/notebook', label: 'My Lab' },
   { path: '/join', label: 'Join' },
+  { path: '/host', label: 'Host' },
   // The /api-status debug page still exists — add
   // `{ path: '/api-status', label: 'API Status', devOnly: true }` to surface it.
   // ── Features add nav items below this line ──

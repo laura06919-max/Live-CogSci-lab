@@ -15,6 +15,12 @@ Classroom tools for running experiments already exist (Classperiment, PsyToolkit
 the **personal, evidence-grounded debrief** and the **prediction step**: students find out not only that they
 are biased, but whether they can estimate their own bias.
 
+**My Lab:** every experiment a student takes part in is saved to a private lab notebook. Each entry has
+the area of cognitive science (judgment & decision-making, cognitive control & attention), their condition
+and answer, the class result, the research finding and a takeaway. Over a quarter, a course builds up a record
+of effects each student has *experienced*. It's a learning history, not a profile: no scores, rankings or
+comparisons between individual students.
+
 Built on [DeepSpace](https://docs.deep.space) for a five-day build exercise.
 
 ## How it works
@@ -26,6 +32,7 @@ Built on [DeepSpace](https://docs.deep.space) for a five-day build exercise.
 | Join, submit, reveal/reopen, explain | `src/actions/index.ts` | Server actions |
 | AI debrief | `explainResults` | Integrations: `scholar/search-papers` (link lookup) → `anthropic/chat-completion` |
 | Sign-in | `(protected)` route group | DeepSpace auth |
+| My Lab notebook | `src/pages/(app)/(protected)/notebook.tsx` | No extra collection: own `responses` rows (server-filtered by `read: 'shared'`) joined with revealed `sessions.stats` |
 | Shared stats math (charts, debrief, AI prompt) | `computeStats` in `src/experiments.ts` (unit-tested) | — |
 
 ### What the server enforces, and why
@@ -63,7 +70,10 @@ owner's credits), and recomputes stats from the database rather than trusting cl
 
 - **Main tradeoff: participants must sign in.** Anonymous joining would be faster in a lecture hall. But
   one answer per person, server-assigned conditions and "you can only read your own row" all depend on a
-  verified identity. Without that, the experiment data and the privacy guarantee mean nothing.
+  verified identity. Without that, the experiment data and the privacy guarantee mean nothing. Sign-in also
+  gives students something back: the My Lab notebook.
+- **Takeaways are fixed text per experiment, not AI-written per student.** That keeps them consistent,
+  reviewable and free. The AI debrief stays one per session.
 - **Depth over breadth:** three experiments with a personal debrief and a prediction step, instead of a
   large library of paradigms.
 - **Not added:** an AI chat assistant (a one-shot debrief covers the need), image generation (adds nothing
@@ -82,9 +92,12 @@ owner's credits), and recomputes stats from the database rather than trusting cl
 
 ## What I'd do next
 
-1. Show confidence intervals once a group has 10 or more answers, and warn about very small groups.
-2. Let instructors export CSV and compare sections over a term.
-3. Add more paradigms (the Linda problem, the Müller-Lyer illusion) through the same `EXPERIMENTS` registry,
+1. Let students delete or export their notebook. Deleting a response also changes the instructor's dataset,
+   so it needs a deliberate rule (for example "anonymize, don't delete" after the reveal).
+2. Add courses/sections so instructors can see a quarter's sessions together (aggregates only).
+3. Show confidence intervals once a group has 10 or more answers, and warn about very small groups.
+4. Let instructors export CSV and compare sections over a term.
+5. Add more paradigms and areas (memory, perception, language), e.g. the Linda problem or the Müller-Lyer illusion, through the same `EXPERIMENTS` registry,
    each with canonical sources.
 
 ## Run it
