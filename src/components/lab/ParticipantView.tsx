@@ -10,7 +10,7 @@ import {
   type ResponseRow,
   type Session,
 } from '../../experiments'
-import { Explanation, PredictedVsActual } from './Compare'
+import { Explanation, PredictedVsActual, WhyItMatters } from './Compare'
 
 interface Props {
   sessionId: string
@@ -54,7 +54,9 @@ export default function ParticipantView({ sessionId, session, mine }: Props) {
   return (
     <AnswerCtx.Provider value={setAnswer}>
       <div className="mx-auto max-w-lg px-4 py-10">
-        <p className="text-sm uppercase tracking-widest text-muted-foreground">{session.title}</p>
+        <p className="text-sm uppercase tracking-widest text-muted-foreground">
+          {open ? exp.neutralLabel : `${exp.name} effect · ${session.title}`}
+        </p>
         {body}
       </div>
     </AnswerCtx.Provider>
@@ -163,6 +165,7 @@ function Debrief({ session, mine }: { session: Session; mine: ResponseRow }) {
       <p className="text-xs text-muted-foreground">
         A classroom demonstration, not a cognitive assessment: one session, a few trials, phone timing.
       </p>
+      <WhyItMatters experiment={session.experiment} />
       {session.explanation ? (
         <Explanation text={session.explanation} sources={session.sources} />
       ) : (

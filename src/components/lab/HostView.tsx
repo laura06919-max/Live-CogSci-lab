@@ -3,7 +3,7 @@ import { Button, useToast } from '@/components/ui'
 import { callAction } from '@/lib/actions'
 import { ANCHORS, EXPERIMENTS, computeStats, mean, median, type ResponseRow, type Session } from '../../experiments'
 import Qr from './Qr'
-import { Explanation, PredictedVsActual } from './Compare'
+import { Explanation, PredictedVsActual, WhyItMatters } from './Compare'
 
 interface Props {
   sessionId: string
@@ -40,8 +40,13 @@ export default function HostView({ sessionId, session, rows }: Props) {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-widest text-muted-foreground">{exp.name} · {session.title}</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">{exp.tagline}</h1>
+          {/* While answers are open this screen is on the projector: no effect name or hint, to avoid priming. */}
+          <p className="text-sm uppercase tracking-widest text-muted-foreground">
+            {open ? exp.neutralLabel : `${exp.name} effect`} · {session.title}
+          </p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight">
+            {open ? 'Scan to join. Answer on your own, without talking.' : exp.tagline}
+          </h1>
           <p className="mt-2 text-muted-foreground">
             <span data-testid="joined-count" className="font-semibold text-foreground">{joined}</span> joined ·{' '}
             <span data-testid="submitted-count" className="font-semibold text-foreground">{done.length}</span> answered
@@ -98,6 +103,12 @@ export default function HostView({ sessionId, session, rows }: Props) {
       {!open && session.explanation && (
         <div className="mt-6">
           <Explanation text={session.explanation} sources={session.sources} />
+        </div>
+      )}
+
+      {!open && done.length > 0 && (
+        <div className="mt-6">
+          <WhyItMatters experiment={session.experiment} />
         </div>
       )}
     </div>

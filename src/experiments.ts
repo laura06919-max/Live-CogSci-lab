@@ -21,6 +21,18 @@ export interface ExperimentDef {
   area: Area
   /** One fixed sentence a student keeps (same for everyone, so it isn't per-person AI output). */
   takeaway: string
+  /**
+   * Neutral label shown before the reveal (projector, phones, notebook).
+   * Naming the effect or explaining it before people answer would prime them.
+   */
+  neutralLabel: string
+  /** Post-reveal "Why this matters" content, curated (not AI-generated). */
+  why: {
+    method: string
+    concepts: string[]
+    realLife: string[]
+    reflection: string
+  }
   /** Between-subjects conditions. Empty = within-subjects (everyone does everything). */
   conditions: string[]
   conditionLabels: Record<string, string>
@@ -45,6 +57,18 @@ export const EXPERIMENTS: Record<ExperimentId, ExperimentDef> = {
     tagline: 'Does an absurd number change your best guess?',
     area: 'Judgment & decision-making',
     takeaway: 'A number you see first can pull later estimates toward it, even when that number is obviously unrealistic.',
+    neutralLabel: 'Estimation study',
+    why: {
+      method: 'Between-subjects experiment: random assignment to one of two anchors (independent variable); your age estimate is the dependent variable; the effect is a difference in group means.',
+      concepts: ['Heuristics and biases', 'Anchoring-and-adjustment', 'Random assignment', 'Independent vs. dependent variable', 'Comparing two group means'],
+      realLife: [
+        'The first number put on the table in a salary or price negotiation',
+        '"Originally $120, now $59" price tags',
+        'Suggested donation or tip amounts',
+        'The first time estimate someone throws out in a group project',
+      ],
+      reflection: 'Where have you recently seen a first number shape what you thought was reasonable — a price, a grade estimate, a deadline?',
+    },
     conditions: ['low', 'high'],
     conditionLabels: { low: 'Anchor: 9', high: 'Anchor: 140' },
     canonical: [
@@ -67,6 +91,18 @@ export const EXPERIMENTS: Record<ExperimentId, ExperimentDef> = {
     tagline: 'Same outcomes, different words — does the choice flip?',
     area: 'Judgment & decision-making',
     takeaway: 'Describing the same outcome as a gain or a loss changes how much risk people are willing to take.',
+    neutralLabel: 'Decision-making study',
+    why: {
+      method: 'Between-subjects experiment: identical options described as lives saved vs. lives lost (independent variable); choice of the sure vs. risky option is the dependent variable, compared as proportions.',
+      concepts: ['Framing effects', 'Prospect theory and loss aversion', 'Risk preference', 'Random assignment', 'Comparing two proportions'],
+      realLife: [
+        '"95% fat-free" vs. "5% fat" on food labels',
+        'A treatment described by its survival rate vs. its mortality rate',
+        '"Early-registration discount" vs. "late-registration fee"',
+        'How a policy or news headline words its numbers',
+      ],
+      reflection: 'Think of a choice you made recently. Would you have chosen differently if the same facts had been described as a loss instead of a gain?',
+    },
     conditions: ['gain', 'loss'],
     conditionLabels: { gain: 'Framed as lives saved', loss: 'Framed as lives lost' },
     canonical: [
@@ -89,6 +125,18 @@ export const EXPERIMENTS: Record<ExperimentId, ExperimentDef> = {
     tagline: 'Name the ink color, not the word.',
     area: 'Cognitive control & attention',
     takeaway: 'Reading is so automatic that it interferes with naming the ink color; overriding it takes control, and time.',
+    neutralLabel: 'Reaction-time study',
+    why: {
+      method: 'Within-subjects experiment: everyone does both congruent and incongruent trials; reaction time is the dependent variable, compared within each person.',
+      concepts: ['Automatic vs. controlled processing', 'Selective attention', 'Cognitive control / executive function', 'Within-subjects design', 'Reaction time as a measure'],
+      realLife: [
+        'Reading a notification while trying to listen in lecture',
+        'Typing one thing while someone says a different word out loud',
+        'Following a sign that conflicts with a habit (e.g. a detour on your usual route)',
+        'Why habits are hard to override when you are tired or rushed',
+      ],
+      reflection: 'What is something you do so automatically that it gets in the way when the situation asks for something different?',
+    },
     conditions: [],
     conditionLabels: {},
     canonical: [

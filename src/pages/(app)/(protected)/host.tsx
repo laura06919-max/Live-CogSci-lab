@@ -31,7 +31,7 @@ export default function HostPage() {
           const id = await createConfirmed({
             code: makeCode(),
             hostId: userId,
-            title: title.trim() || `${EXPERIMENTS[experiment].name} demo`,
+            title: title.trim() || 'Class session',
             experiment,
           })
           navigate(`/lab/${id}`)
@@ -77,7 +77,7 @@ export default function HostPage() {
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <Input
-          placeholder="Session title (optional), e.g. COGS 1 — Section B"
+          placeholder="Session title, e.g. COGS 1 · Section B (students see this, so don't name the effect)"
           value={title}
           maxLength={80}
           onChange={(e) => setTitle(e.target.value)}

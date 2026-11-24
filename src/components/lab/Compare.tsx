@@ -72,3 +72,47 @@ export function Explanation({ text, sources }: { text: string; sources?: Source[
     </section>
   )
 }
+
+/** Post-reveal only: method, concepts, real-life examples, reflection. Curated text, never shown before answering. */
+export function WhyItMatters({ experiment }: { experiment: ExperimentId }) {
+  const exp = EXPERIMENTS[experiment]
+  return (
+    <section data-testid="why-it-matters" className="rounded-2xl border border-border bg-card p-5">
+      <h2 className="text-lg font-semibold">Why this matters</h2>
+      <dl className="mt-3 space-y-3 text-sm">
+        <div>
+          <dt className="text-xs uppercase tracking-widest text-muted-foreground">Area</dt>
+          <dd className="mt-1">{exp.area}</dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-widest text-muted-foreground">How the study worked</dt>
+          <dd className="mt-1">{exp.why.method}</dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-widest text-muted-foreground">Concepts you may see in your courses</dt>
+          <dd className="mt-2 flex flex-wrap gap-1.5">
+            {exp.why.concepts.map((c) => (
+              <span key={c} className="rounded-full bg-muted px-2.5 py-1 text-xs">
+                {c}
+              </span>
+            ))}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs uppercase tracking-widest text-muted-foreground">Where it shows up in real life</dt>
+          <dd className="mt-1">
+            <ul className="list-disc space-y-1 pl-5">
+              {exp.why.realLife.map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+        <div className="rounded-xl bg-primary/10 p-3">
+          <dt className="text-xs uppercase tracking-widest text-muted-foreground">Think about it</dt>
+          <dd className="mt-1">{exp.why.reflection}</dd>
+        </div>
+      </dl>
+    </section>
+  )
+}

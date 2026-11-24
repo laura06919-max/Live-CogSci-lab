@@ -21,6 +21,14 @@ and answer, the class result, the research finding and a takeaway. Over a quarte
 of effects each student has *experienced*. It's a learning history, not a profile: no scores, rankings or
 comparisons between individual students.
 
+**Why this matters:** after the reveal, every student also gets the study's method (between- vs.
+within-subjects, IV/DV), concept tags they'll recognize from coursework, real-life examples, and a reflection
+question. All of it is written in advance per experiment, not AI-generated, and saved to their notebook.
+
+**No priming:** until the reveal, the projector, phones and notebook show only a neutral label
+("Estimation study", "Decision-making study") and no hint about the effect. Explaining an effect before
+people answer would change the result.
+
 Built on [DeepSpace](https://docs.deep.space) for a five-day build exercise.
 
 ## How it works
@@ -94,10 +102,15 @@ owner's credits), and recomputes stats from the database rather than trusting cl
 
 1. Let students delete or export their notebook. Deleting a response also changes the instructor's dataset,
    so it needs a deliberate rule (for example "anonymize, don't delete" after the reveal).
-2. Add courses/sections so instructors can see a quarter's sessions together (aggregates only).
-3. Show confidence intervals once a group has 10 or more answers, and warn about very small groups.
-4. Let instructors export CSV and compare sections over a term.
-5. Add more paradigms and areas (memory, perception, language), e.g. the Linda problem or the Müller-Lyer illusion, through the same `EXPERIMENTS` registry,
+2. Course matching: students optionally add their current courses; experiments already carry concept tags,
+   so a notebook entry could say "related to 2 of your courses." Course-to-concept mappings should be
+   curated by instructors, not guessed by AI.
+3. Complement UCSD SONA rather than replace it: SONA stays the system for scheduling and research credit,
+   and this could provide an approved, learning-focused debrief.
+4. Add courses/sections so instructors can see a quarter's sessions together (aggregates only).
+5. Show confidence intervals once a group has 10 or more answers, and warn about very small groups.
+6. Let instructors export CSV and compare sections over a term.
+7. Add more paradigms and areas (memory, perception, language), e.g. the Linda problem or the Müller-Lyer illusion, through the same `EXPERIMENTS` registry,
    each with canonical sources.
 
 ## Run it

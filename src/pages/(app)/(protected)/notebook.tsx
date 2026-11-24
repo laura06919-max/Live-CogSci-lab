@@ -35,10 +35,11 @@ export default function NotebookPage() {
       .sort((a, b) => time(b.response.updatedAt) - time(a.response.updatedAt))
   }, [responses.records, sessions.records])
 
-  const counts = Object.fromEntries(
-    AREAS.map((a) => [a, entries.filter((e) => EXPERIMENTS[e.session.data.experiment].area === a).length]),
-  ) as Record<Area, number>
-  const shown = area === 'all' ? entries : entries.filter((e) => EXPERIMENTS[e.session.data.experiment].area === area)
+  // Areas count only revealed sessions, so an unrevealed entry doesn't hint at its topic.
+  const isRevealed = (e: (typeof entries)[number]) => e.session.data.phase === 'closed' && !!e.session.data.stats
+  const areaOf = (e: (typeof entries)[number]) => (isRevealed(e) ? EXPERIMENTS[e.session.data.experiment].area : null)
+  const counts = Object.fromEntries(AREAS.map((a) => [a, entries.filter((e) => areaOf(e) === a).length])) as Record<Area, number>
+  const shown = area === 'all' ? entries : entries.filter((e) => areaOf(e) === area)
   const loading = responses.status === 'loading' || sessions.status === 'loading'
 
   return (
@@ -82,9 +83,9 @@ export default function NotebookPage() {
             return (
               <li key={response.recordId} data-testid="notebook-entry" className="rounded-2xl border border-border bg-card p-5">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h2 className="text-lg font-semibold">{exp.name} effect</h2>
+                  <h2 className="text-lg font-semibold">{revealed ? `${exp.name} effect` : exp.neutralLabel}</h2>
                   <span className="text-xs text-muted-foreground">
-                    {exp.area} · {session.data.title} · {when}
+                    {revealed ? `${exp.area} · ` : ''}{session.data.title} · {when}
                   </span>
                 </div>
                 {lines ? (
@@ -93,6 +94,10 @@ export default function NotebookPage() {
                     <Item k="My class" v={lines.us} />
                     <Item k="Research" v={exp.research} />
                     <Item k="Takeaway" v={exp.takeaway} />
+                    <Item k="Method" v={exp.why.method} />
+                    <Item k="Concepts" v={exp.why.concepts.join(' · ')} />
+                    <Item k="Real life" v={exp.why.realLife.join(' · ')} />
+                    <Item k="Reflect" v={exp.why.reflection} />
                   </dl>
                 ) : (
                   <p className="mt-3 text-sm text-muted-foreground">
