@@ -121,6 +121,11 @@ owner's credits), and recomputes stats from the database rather than trusting cl
 7. Let instructors export CSV and compare sections over a term.
 8. Add more paradigms and areas (memory, perception, language), e.g. the Linda problem or the Müller-Lyer illusion, through the same `EXPERIMENTS` registry,
    each with canonical sources.
+9. Redesign for accessibility and energy. The current UI is clean but generic. Next I'd borrow interaction
+   patterns from live-quiz tools like Kahoot: a full-screen host lobby where joiners pop in, one big decision
+   per phone screen, large color-coded answer tiles (with text labels, so they work for colorblind
+   students), and a dramatic reveal. The goal is to make it feel like a classroom event rather than a
+   dashboard, while keeping its own visual identity and no points or leaderboards.
 
 ## Run it
 
