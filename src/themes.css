@@ -45,7 +45,7 @@
   --color-shell-panel: #ffffff;
 }
 
-/* Notebook — Bias Mirror's own theme. Warm paper, ink text, one deep-teal
+/* Notebook — Live CogSci Lab's own theme. Warm paper, ink text, one deep-teal
  * accent. Light on purpose: the host screen is shown on lecture-hall
  * projectors, where dark slides wash out. */
 [data-theme="notebook"] {

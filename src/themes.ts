@@ -20,7 +20,7 @@ export const THEMES = [
   {
     id: 'notebook',
     label: 'Notebook',
-    description: 'Bias Mirror theme: warm paper, ink text, deep-teal accent. Projector-friendly.',
+    description: 'Live CogSci Lab theme: warm paper, ink text, deep-teal accent. Projector-friendly.',
   },
   {
     id: 'slate',

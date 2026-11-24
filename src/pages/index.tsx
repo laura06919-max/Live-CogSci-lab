@@ -9,7 +9,7 @@ const STEPS = [
   { n: '1', t: 'Host picks an effect', d: 'Anchoring, framing or Stroop. You get a 5-letter code for the projector.' },
   { n: '2', t: 'The room joins on phones', d: 'The server secretly splits people into conditions. Nobody knows which group they are in.' },
   { n: '3', t: 'Predict, then reveal', d: 'Everyone guesses how big the effect will be. Then the room sees its real result, live.' },
-  { n: '4', t: 'Your personal mirror', d: 'Every phone shows me → us → research, plus an AI debrief that may cite only the classic papers.' },
+  { n: '4', t: 'Your personal debrief', d: 'Every phone shows me → us → research, plus an AI debrief that may cite only the classic papers.' },
 ]
 
 export default function Landing() {
@@ -18,7 +18,7 @@ export default function Landing() {
       <Seo {...seo} path="/" />
       <div data-testid="static-landing" className="min-h-screen bg-background text-foreground">
         <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5">
-          <span className="font-display text-lg font-bold">Bias Mirror <span className="font-sans text-sm font-normal text-muted-foreground">· Live CogSci Lab</span></span>
+          <span className="font-display text-lg font-bold">Live CogSci Lab</span>
           <nav className="flex gap-4 text-sm">
             <Link to="/discover" className="underline-offset-4 hover:underline">Discover</Link>
             <Link to="/join" className="underline-offset-4 hover:underline">I have a code</Link>

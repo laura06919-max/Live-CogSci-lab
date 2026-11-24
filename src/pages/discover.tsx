@@ -16,14 +16,14 @@ export default function Discover() {
     <>
       <Seo
         {...seo}
-        title="Discover experiments | Bias Mirror"
+        title="Discover experiments | Live CogSci Lab"
         description="Browse classic cognitive-science experiments you can run live with a class: anchoring, framing and Stroop."
         path="/discover"
       />
       <div className="min-h-screen bg-background text-foreground">
         <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5">
           <Link to="/" className="font-display text-lg font-bold">
-            Bias Mirror
+            Live CogSci Lab
           </Link>
           <nav className="flex gap-4 text-sm">
             <Link to="/join" className="hover:underline">Join with a code</Link>

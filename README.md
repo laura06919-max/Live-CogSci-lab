@@ -1,10 +1,10 @@
-# Bias Mirror · Live CogSci Lab
+# Live CogSci Lab
 
 **See your decision, your room, and the research side by side.**
 
 A host picks a classic effect (**anchoring**, **framing** or **Stroop**). The room joins by QR code or a
 5-letter code. The server secretly assigns each person to a condition. After answering, everyone
-**predicts** how big the room's effect will be. At the reveal, every phone shows a three-level mirror:
+**predicts** how big the room's effect will be. At the reveal, every phone shows a three-level debrief:
 
 1. **Me:** my condition, my answer, my prediction. *("You saw the high anchor: 140. You guessed 93.")*
 2. **Us:** what the room did. *("Your group averaged 87; the low-anchor group averaged 61, a 26-year gap.")*

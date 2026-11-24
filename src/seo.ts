@@ -25,8 +25,8 @@ import { APP_NAME } from './constants'
 declare const __DEEPSPACE_SITE_ORIGIN__: string | undefined
 
 export const seo = {
-  title: 'Bias Mirror | A live cognitive science lab for your classroom',
-  description: 'Run a classic bias experiment with your room, then show each person their answer, the room\'s result and the published research side by side.',
+  title: 'Live CogSci Lab | Run classic cognitive science experiments with your class',
+  description: 'Run a classic cognitive science experiment with your class, then show each person their answer, the class result and the published research side by side.',
   /** Public origin for canonical URLs, og:url, and the sitemap — no trailing
    *  slash. Replace with the custom domain once one is attached, e.g.
    *  'https://www.example.com'. */

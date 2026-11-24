@@ -124,7 +124,7 @@ function Predict({ sessionId, session, answer }: { sessionId: string; session: S
   )
 }
 
-/** Bias Mirror: me → us → evidence. Uses only my own row plus the room stats the server published at reveal. */
+/** Personal debrief: me → us → evidence. Uses only my own row plus the room stats the server published at reveal. */
 function Debrief({ session, mine }: { session: Session; mine: ResponseRow }) {
   const exp = EXPERIMENTS[session.experiment]
   const stats = session.stats
@@ -144,7 +144,7 @@ function Debrief({ session, mine }: { session: Session; mine: ResponseRow }) {
 
   return (
     <div data-testid="debrief" className="mt-6 space-y-5">
-      <h1 className="font-display text-2xl font-bold">Your bias mirror</h1>
+      <h1 className="font-display text-2xl font-bold">Your results</h1>
       <div className="space-y-3">
         <Row k="Me" v={me} />
         <Row k="Us" v={us} />
